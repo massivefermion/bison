@@ -18,6 +18,7 @@ gleam add gleam_bson
 ## Roadmap
 
 - [x] support encoding and decoding basic bson types (null, string, int32, int64, double, boolean, objectId, array, document)
+- [ ] support generating new objectIds
 - [ ] support encoding and decoding other bson types
 
 ## Usage
