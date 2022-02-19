@@ -5,7 +5,7 @@ import gleam/string
 import gleam/bit_string
 
 pub opaque type ObjectId {
-  ObjectId(value: BitString)
+  ObjectId(BitString)
 }
 
 pub fn to_bit_string(id: ObjectId) -> BitString {
@@ -55,7 +55,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
               <<a:4, b:4>>
             })
             |> bit_string.concat
-          Ok(ObjectId(value: value))
+          Ok(ObjectId(value))
         }
         True -> Error(Nil)
       }
@@ -66,7 +66,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
 
 pub fn from_bit_string(id: BitString) -> Result(ObjectId, Nil) {
   case bit_string.byte_size(id) == 12 {
-    True -> Ok(ObjectId(value: id))
+    True -> Ok(ObjectId(id))
     False -> Error(Nil)
   }
 }

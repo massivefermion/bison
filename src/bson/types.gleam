@@ -4,10 +4,6 @@ pub type Kind {
   Kind(code: BitString)
 }
 
-pub type Entity {
-  Entity(kind: Kind, value: BitString)
-}
-
 pub type Value {
   Null
   Min
