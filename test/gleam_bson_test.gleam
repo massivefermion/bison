@@ -40,7 +40,7 @@ pub fn decoder_test() {
   let doc = get_doc()
 
   decoder.decode(bson)
-  |> should.equal(Ok(types.Document(doc)))
+  |> should.equal(Ok(doc))
 }
 
 fn get_doc() -> List(#(String, types.Value)) {

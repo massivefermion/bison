@@ -9,8 +9,11 @@ import bson/types.{
 }
 import bson/object_id
 
-pub fn decode(data: BitString) -> Result(types.Value, Nil) {
-  decode_document(data)
+pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
+  case decode_document(data) {
+    Ok(types.Document(doc)) -> Ok(doc)
+    Error(Nil) -> Error(Nil)
+  }
 }
 
 fn decode_document(data: BitString) -> Result(types.Value, Nil) {
