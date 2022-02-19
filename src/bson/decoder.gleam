@@ -5,16 +5,15 @@ import gleam/list
 import gleam/result
 import gleam/bit_string
 import bson/types.{
-  Array, Boolean, Document, Double, Integer, Kind, Null, ObjectId, Str, Value, array,
-  boolean, document, double, int32, int64, null, object_id, string,
+  array, boolean, document, double, int32, int64, null, object_id, string,
 }
 import bson/object_id
 
-pub fn decode(data: BitString) -> Result(Value, Nil) {
+pub fn decode(data: BitString) -> Result(types.Value, Nil) {
   decode_document(data)
 }
 
-fn decode_document(data: BitString) -> Result(Value, Nil) {
+fn decode_document(data: BitString) -> Result(types.Value, Nil) {
   let total_size = bit_string.byte_size(data)
   let last_byte = bit_string.slice(data, total_size, -1)
   case last_byte == Ok(<<0>>) {
@@ -25,7 +24,7 @@ fn decode_document(data: BitString) -> Result(Value, Nil) {
           case bit_string.slice(rest, 0, total_size - 4 - 1) {
             Ok(body) ->
               case decode_body(body, []) {
-                Ok(body) -> Ok(Document(body))
+                Ok(body) -> Ok(types.Document(body))
                 Error(Nil) -> Error(Nil)
               }
             Error(Nil) -> Error(Nil)
@@ -39,8 +38,8 @@ fn decode_document(data: BitString) -> Result(Value, Nil) {
 
 fn decode_body(
   data: BitString,
-  storage: List(#(String, Value)),
-) -> Result(List(#(String, Value)), Nil) {
+  storage: List(#(String, types.Value)),
+) -> Result(List(#(String, types.Value)), Nil) {
   case bit_string.byte_size(data) == 0 {
     True -> Ok(storage)
     False -> {
@@ -57,38 +56,56 @@ fn decode_body(
                 total_size - key_size - 1,
               ) {
                 Ok(rest) -> {
-                  let kind = Kind(code: <<code>>)
+                  let kind = types.Kind(code: <<code>>)
                   case kind {
                     kind if kind == double -> {
                       let <<value:little-float, rest:bit_string>> = rest
-                      decode_body(rest, [#(key, Double(value)), ..storage])
+                      decode_body(
+                        rest,
+                        [#(key, types.Double(value)), ..storage],
+                      )
                     }
                     kind if kind == object_id -> {
                       let <<value:96-bit_string, rest:bit_string>> = rest
                       case object_id.from_bit_string(value) {
                         Ok(oid) ->
-                          decode_body(rest, [#(key, ObjectId(oid)), ..storage])
+                          decode_body(
+                            rest,
+                            [#(key, types.ObjectId(oid)), ..storage],
+                          )
                       }
                     }
                     kind if kind == boolean -> {
                       let <<value:8, rest:bit_string>> = rest
                       case value {
                         1 ->
-                          decode_body(rest, [#(key, Boolean(True)), ..storage])
+                          decode_body(
+                            rest,
+                            [#(key, types.Boolean(True)), ..storage],
+                          )
                         0 ->
-                          decode_body(rest, [#(key, Boolean(False)), ..storage])
+                          decode_body(
+                            rest,
+                            [#(key, types.Boolean(False)), ..storage],
+                          )
                         _ -> Error(Nil)
                       }
                     }
                     kind if kind == null ->
-                      decode_body(rest, [#(key, Null), ..storage])
+                      decode_body(rest, [#(key, types.Null), ..storage])
                     kind if kind == int32 -> {
                       let <<value:32-little, rest:bit_string>> = rest
-                      decode_body(rest, [#(key, Integer(value)), ..storage])
+                      decode_body(
+                        rest,
+                        [#(key, types.Integer(value)), ..storage],
+                      )
                     }
                     kind if kind == int64 -> {
                       let <<value:64-little, rest:bit_string>> = rest
-                      decode_body(rest, [#(key, Integer(value)), ..storage])
+                      decode_body(
+                        rest,
+                        [#(key, types.Integer(value)), ..storage],
+                      )
                     }
                     kind if kind == string -> {
                       let <<given_size:32-little-int, rest:bit_string>> = rest
@@ -107,7 +124,7 @@ fn decode_body(
                                     Ok(rest) ->
                                       decode_body(
                                         rest,
-                                        [#(key, Str(str)), ..storage],
+                                        [#(key, types.Str(str)), ..storage],
                                       )
                                     Error(Nil) -> Error(Nil)
                                   }
@@ -129,7 +146,7 @@ fn decode_body(
                                 kind if kind == document -> Ok(doc)
                                 kind if kind == array ->
                                   case doc {
-                                    Document(doc) -> {
+                                    types.Document(doc) -> {
                                       let list =
                                         doc
                                         |> list.map(fn(item) {
@@ -152,7 +169,7 @@ fn decode_body(
                                       ) {
                                         True -> Error(Nil)
                                         False ->
-                                          Ok(Array(
+                                          Ok(types.Array(
                                             list
                                             |> list.map(fn(item) {
                                               #(
