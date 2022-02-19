@@ -1,10 +1,9 @@
 import gleeunit
-import gleam/list
 import bson/types
-import bson/decoder
-import bson/encoder
+import gleam/list
 import bson/object_id
 import gleeunit/should
+import bson.{decode, encode}
 
 const bson = <<
   45, 1, 0, 0, 3, 100, 97, 116, 97, 0, 243, 0, 0, 0, 2, 116, 105, 116, 108, 101,
@@ -32,14 +31,14 @@ pub fn main() {
 pub fn encoder_test() {
   let doc = get_doc()
 
-  encoder.encode(doc)
+  encode(doc)
   |> should.equal(bson)
 }
 
 pub fn decoder_test() {
   let doc = get_doc()
 
-  decoder.decode(bson)
+  decode(bson)
   |> should.equal(Ok(doc))
 }
 
