@@ -48,7 +48,7 @@ fn decode_body(
     False -> {
       let <<code:8, data:bit_string>> = data
       let total_size = bit_string.byte_size(data)
-      case consume_til_zero(data, <<>>) {
+      case consume_till_zero(data, <<>>) {
         Ok(key) -> {
           let key_size = bit_string.byte_size(key)
           case bit_string.to_string(key) {
@@ -112,7 +112,7 @@ fn decode_body(
                     }
                     kind if kind == string -> {
                       let <<given_size:32-little-int, rest:bit_string>> = rest
-                      case consume_til_zero(rest, <<>>) {
+                      case consume_till_zero(rest, <<>>) {
                         Ok(str) -> {
                           let str_size = bit_string.byte_size(str)
                           case given_size == str_size + 1 {
@@ -241,7 +241,7 @@ fn decode_body(
   }
 }
 
-fn consume_til_zero(
+fn consume_till_zero(
   data: BitString,
   storage: BitString,
 ) -> Result(BitString, Nil) {
@@ -250,7 +250,7 @@ fn consume_til_zero(
       let <<ch:8, rest:bit_string>> = data
       case ch == 0 {
         True -> Ok(storage)
-        False -> consume_til_zero(rest, bit_string.append(storage, <<ch>>))
+        False -> consume_till_zero(rest, bit_string.append(storage, <<ch>>))
       }
     }
     True -> Error(Nil)
