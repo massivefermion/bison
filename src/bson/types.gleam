@@ -6,8 +6,6 @@ pub type Kind {
 
 pub type Value {
   Null
-  Min
-  Max
   Str(String)
   Integer(Int)
   Double(Float)
