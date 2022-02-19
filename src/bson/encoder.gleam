@@ -4,7 +4,7 @@ import bson/types
 import bson/object_id
 import gleam/bit_string
 
-pub opaque type Entity {
+type Entity {
   Entity(kind: types.Kind, value: BitString)
 }
 
