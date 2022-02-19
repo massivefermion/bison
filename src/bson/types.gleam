@@ -1,9 +1,5 @@
 import bson/object_id.{ObjectId}
 
-pub type Kind {
-  Kind(code: BitString)
-}
-
 pub type Value {
   Null
   Str(String)
@@ -13,6 +9,10 @@ pub type Value {
   Array(List(Value))
   ObjectId(ObjectId)
   Document(List(#(String, Value)))
+}
+
+pub type Kind {
+  Kind(code: BitString)
 }
 
 pub const double = Kind(code: <<0x01>>)
