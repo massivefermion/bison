@@ -25,7 +25,7 @@ gleam add gleam_bson
 
 ### Encoding
 
-```
+```gleam
 import myapp.{Cat}
 import gleam/list
 import bson/types
@@ -55,7 +55,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
 
 ### Decoding
 
-```
+```gleam
 import myapp.{Cat}
 import gleam/list
 import bson/types
