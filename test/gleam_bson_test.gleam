@@ -43,9 +43,7 @@ pub fn decoder_test() {
 }
 
 fn get_doc() -> List(#(String, types.Value)) {
-  let id = case object_id.from_string("613e0c9717468a6e4bfc646d") {
-    Ok(id) -> id
-  }
+  assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
 
   [
     #("_id", types.ObjectId(id)),

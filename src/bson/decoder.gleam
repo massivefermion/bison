@@ -76,6 +76,7 @@ fn decode_body(
                             rest,
                             [#(key, types.ObjectId(oid)), ..storage],
                           )
+                        Error(Nil) -> Error(Nil)
                       }
                     }
                     kind if kind == boolean -> {
@@ -175,10 +176,11 @@ fn decode_body(
                                           Ok(types.Array(
                                             list
                                             |> list.map(fn(item) {
-                                              #(
+                                              assert Ok(first) =
                                                 item
                                                 |> pair.first
-                                                |> result.unwrap(0),
+                                              #(
+                                                first,
                                                 item
                                                 |> pair.second,
                                               )
@@ -199,7 +201,9 @@ fn decode_body(
                                           ))
                                       }
                                     }
+                                    _ -> Error(Nil)
                                   }
+                                _ -> Error(Nil)
                               }
                               case doc {
                                 Ok(doc) ->

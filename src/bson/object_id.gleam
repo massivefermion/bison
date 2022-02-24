@@ -45,9 +45,8 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
           let value =
             codes
             |> list.map(fn(item) {
-              case item {
-                Ok(char) -> char
-              }
+              assert Ok(digit) = item
+              digit
             })
             |> list.sized_chunk(2)
             |> list.map(fn(pair) {
@@ -105,7 +104,6 @@ fn to_char(digit: Int) -> String {
     True -> digit + 48
     False -> digit + 87
   }
-  case bit_string.to_string(<<ch>>) {
-    Ok(ch) -> ch
-  }
+  assert Ok(digit) = bit_string.to_string(<<ch>>)
+  digit
 }
