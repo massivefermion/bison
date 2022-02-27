@@ -1,13 +1,12 @@
-import gleam/io
 import gleam/int
 import gleam/pair
 import gleam/list
 import gleam/result
+import bson/object_id
 import gleam/bit_string
 import bson/types.{
   array, boolean, document, double, int32, int64, null, object_id, string,
 }
-import bson/object_id
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
   case decode_document(data) {
