@@ -1,7 +1,6 @@
 import gleam/int
 import gleam/pair
 import gleam/list
-import gleam/io
 import gleam/result
 import bson/object_id
 import gleam/bit_string
@@ -279,11 +278,7 @@ fn decode_body(
                         Error(Nil) -> Error(Nil)
                       }
                     }
-                    _ -> {
-                      kind
-                      |> io.debug
-                      Error(Nil)
-                    }
+                    _ -> Error(Nil)
                   }
                 }
                 Error(Nil) -> Error(Nil)
