@@ -1,11 +1,16 @@
 import bson/object_id.{ObjectId}
 
 pub type Value {
+  Min
+  Max
   Null
+  JS(String)
   Str(String)
   Integer(Int)
   Double(Float)
   Boolean(Bool)
+  DateTime(Int)
+  Timestamp(Int)
   Array(List(Value))
   ObjectId(ObjectId)
   Document(List(#(String, Value)))

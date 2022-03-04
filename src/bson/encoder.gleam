@@ -34,13 +34,18 @@ fn encode_kv(pair: #(String, types.Value)) -> BitString {
 
   let value = case pair.1 {
     types.Null -> null()
+    types.Min -> min()
+    types.Max -> max()
+    types.JS(value) -> js(value)
     types.Str(value) -> string(value)
     types.Array(value) -> array(value)
     types.Double(value) -> double(value)
     types.Boolean(value) -> boolean(value)
     types.Integer(value) -> integer(value)
     types.Document(value) -> document(value)
+    types.DateTime(value) -> datetime(value)
     types.ObjectId(value) -> object_id(value)
+    types.Timestamp(value) -> timestamp(value)
   }
 
   case value {
@@ -90,6 +95,27 @@ fn integer(value: Int) -> Entity {
     True -> Entity(kind: types.int32, value: <<value:32-little>>)
     False -> Entity(kind: types.int64, value: <<value:64-little>>)
   }
+}
+
+fn datetime(value: Int) -> Entity {
+  Entity(kind: types.datetime, value: <<value:64-little>>)
+}
+
+fn timestamp(value: Int) -> Entity {
+  Entity(kind: types.timestamp, value: <<value:64-little>>)
+}
+
+fn js(value: String) -> Entity {
+  let length = bit_string.byte_size(<<value:utf8>>) + 1
+  Entity(kind: types.js, value: <<length:32-little, value:utf8, 0>>)
+}
+
+fn min() -> Entity {
+  Entity(kind: types.min, value: <<>>)
+}
+
+fn max() -> Entity {
+  Entity(kind: types.max, value: <<>>)
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {

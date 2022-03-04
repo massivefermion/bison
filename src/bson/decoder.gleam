@@ -1,11 +1,13 @@
 import gleam/int
 import gleam/pair
 import gleam/list
+import gleam/io
 import gleam/result
 import bson/object_id
 import gleam/bit_string
 import bson/types.{
-  array, boolean, document, double, int32, int64, null, object_id, string,
+  array, boolean, datetime, document, double, int32, int64, js, max, min, null, object_id,
+  string, timestamp,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -96,6 +98,10 @@ fn decode_body(
                     }
                     kind if kind == null ->
                       decode_body(rest, [#(key, types.Null), ..storage])
+                    kind if kind == min ->
+                      decode_body(rest, [#(key, types.Min), ..storage])
+                    kind if kind == max ->
+                      decode_body(rest, [#(key, types.Max), ..storage])
                     kind if kind == int32 -> {
                       let <<value:32-little, rest:bit_string>> = rest
                       decode_body(
@@ -108,6 +114,20 @@ fn decode_body(
                       decode_body(
                         rest,
                         [#(key, types.Integer(value)), ..storage],
+                      )
+                    }
+                    kind if kind == datetime -> {
+                      let <<value:64-little, rest:bit_string>> = rest
+                      decode_body(
+                        rest,
+                        [#(key, types.DateTime(value)), ..storage],
+                      )
+                    }
+                    kind if kind == timestamp -> {
+                      let <<value:64-little-unsigned, rest:bit_string>> = rest
+                      decode_body(
+                        rest,
+                        [#(key, types.Timestamp(value)), ..storage],
                       )
                     }
                     kind if kind == string -> {
@@ -128,6 +148,35 @@ fn decode_body(
                                       decode_body(
                                         rest,
                                         [#(key, types.Str(str)), ..storage],
+                                      )
+                                    Error(Nil) -> Error(Nil)
+                                  }
+                                Error(Nil) -> Error(Nil)
+                              }
+                            False -> Error(Nil)
+                          }
+                        }
+                        Error(Nil) -> Error(Nil)
+                      }
+                    }
+                    kind if kind == js -> {
+                      let <<given_size:32-little-int, rest:bit_string>> = rest
+                      case consume_till_zero(rest, <<>>) {
+                        Ok(str) -> {
+                          let str_size = bit_string.byte_size(str)
+                          case given_size == str_size + 1 {
+                            True ->
+                              case bit_string.to_string(str) {
+                                Ok(str) ->
+                                  case bit_string.slice(
+                                    rest,
+                                    str_size + 1,
+                                    bit_string.byte_size(rest) - str_size - 1,
+                                  ) {
+                                    Ok(rest) ->
+                                      decode_body(
+                                        rest,
+                                        [#(key, types.JS(str)), ..storage],
                                       )
                                     Error(Nil) -> Error(Nil)
                                   }
@@ -230,7 +279,11 @@ fn decode_body(
                         Error(Nil) -> Error(Nil)
                       }
                     }
-                    _ -> Error(Nil)
+                    _ -> {
+                      kind
+                      |> io.debug
+                      Error(Nil)
+                    }
                   }
                 }
                 Error(Nil) -> Error(Nil)
