@@ -29,13 +29,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
         id
         |> string.to_graphemes
         |> list.map(fn(char) {
-          let <<code>> =
-            char
-            |> bit_string.from_string
-          code
-        })
-        |> list.map(fn(code) {
-          code
+          char
           |> to_digit
         })
       case codes
@@ -83,18 +77,27 @@ fn to_string_internal(remaining: BitString, storage: String) -> String {
   }
 }
 
-fn to_digit(char: Int) -> Result(Int, Nil) {
-  case char >= 48 && char <= 57 {
-    True -> Ok(char - 48)
-    False ->
-      case char >= 65 && char <= 70 {
-        True -> Ok(char - 55)
-        False ->
-          case char >= 97 && char <= 102 {
-            True -> Ok(char - 87)
-            False -> Error(Nil)
-          }
-      }
+fn to_digit(char: String) -> Result(Int, Nil) {
+  let <<code>> =
+    char
+    |> bit_string.from_string
+
+  case code {
+    code if code >= 48 && code <= 57 -> {
+      let <<_:4, num:4>> =
+        char
+        |> bit_string.from_string
+      Ok(num)
+    }
+
+    code if code >= 65 && code <= 70 || code >= 97 && code <= 102 -> {
+      let <<_:5, additive:3>> =
+        char
+        |> bit_string.from_string
+      Ok(9 + additive)
+    }
+
+    _ -> Error(Nil)
   }
 }
 

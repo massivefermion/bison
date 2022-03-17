@@ -1,6 +1,5 @@
 import gleeunit
 import bson/types
-import gleam/list
 import bson/object_id
 import gleeunit/should
 import bson.{decode, encode}
