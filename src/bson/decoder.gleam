@@ -1,12 +1,13 @@
 import gleam/int
 import gleam/pair
 import gleam/list
+import bson/binary
 import gleam/result
 import bson/object_id
 import gleam/bit_string
 import bson/types.{
-  array, boolean, datetime, document, double, int32, int64, js, max, min, null, object_id,
-  string, timestamp,
+  array, binary, boolean, datetime, document, double, generic, int32, int64, js,
+  max, min, null, object_id, string, timestamp,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -61,6 +62,29 @@ fn decode_body(
                 Ok(rest) -> {
                   let kind = types.Kind(code: <<code>>)
                   case kind {
+                    kind if kind == binary -> {
+                      let <<
+                        byte_size:32-little-int,
+                        sub_code:8,
+                        rest:bit_string,
+                      >> = rest
+                      let given_size = byte_size * 8
+                      let <<value:size(given_size)-bit_string, rest:bit_string>> =
+                        rest
+                      let sub_kind = types.SubKind(code: <<sub_code>>)
+                      case sub_kind {
+                        sub_kind if sub_kind == generic ->
+                          case binary.from_bit_string(value) {
+                            Ok(value) ->
+                              decode_body(
+                                rest,
+                                [#(key, types.Binary(value)), ..storage],
+                              )
+                            Error(Nil) -> Error(Nil)
+                          }
+                        _ -> Error(Nil)
+                      }
+                    }
                     kind if kind == double -> {
                       let <<value:little-float, rest:bit_string>> = rest
                       decode_body(

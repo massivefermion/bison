@@ -1,6 +1,7 @@
 import gleam/int
 import gleam/list
 import bson/types
+import bson/binary
 import bson/object_id
 import gleam/bit_string
 
@@ -40,6 +41,7 @@ fn encode_kv(pair: #(String, types.Value)) -> BitString {
     types.Str(value) -> string(value)
     types.Array(value) -> array(value)
     types.Double(value) -> double(value)
+    types.Binary(value) -> binary(value)
     types.Boolean(value) -> boolean(value)
     types.Integer(value) -> integer(value)
     types.Document(value) -> document(value)
@@ -116,6 +118,19 @@ fn min() -> Entity {
 
 fn max() -> Entity {
   Entity(kind: types.max, value: <<>>)
+}
+
+fn binary(value: binary.Binary) -> Entity {
+  let value =
+    value
+    |> binary.to_bit_string
+  let length = bit_string.byte_size(value)
+
+  Entity(
+    kind: types.binary,
+    value: [<<length:32-little>>, types.generic.code, value]
+    |> bit_string.concat,
+  )
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {

@@ -1,3 +1,4 @@
+import bson/binary.{Binary}
 import bson/object_id.{ObjectId}
 
 pub type Value {
@@ -10,6 +11,7 @@ pub type Value {
   Double(Float)
   Boolean(Bool)
   DateTime(Int)
+  Binary(Binary)
   Timestamp(Int)
   Array(List(Value))
   ObjectId(ObjectId)
@@ -18,6 +20,10 @@ pub type Value {
 
 pub type Kind {
   Kind(code: BitString)
+}
+
+pub type SubKind {
+  SubKind(code: BitString)
 }
 
 pub const double = Kind(code: <<0x01>>)
@@ -53,6 +59,8 @@ pub const decimal128 = Kind(code: <<0x13>>)
 pub const min = Kind(code: <<0xFF>>)
 
 pub const max = Kind(code: <<0x7F>>)
+
+pub const generic = SubKind(code: <<0x0>>)
 
 pub const int32_min = -2_147_483_648
 

@@ -7,17 +7,17 @@ pub opaque type ObjectId {
   ObjectId(BitString)
 }
 
-pub fn to_bit_string(id: ObjectId) -> BitString {
-  case id {
-    ObjectId(value) -> value
-  }
-}
-
 pub fn to_string(id: ObjectId) -> String {
   case id {
     ObjectId(value) ->
       value
       |> to_string_internal("")
+  }
+}
+
+pub fn to_bit_string(id: ObjectId) -> BitString {
+  case id {
+    ObjectId(value) -> value
   }
 }
 
