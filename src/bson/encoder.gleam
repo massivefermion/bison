@@ -18,7 +18,6 @@ pub fn encode(doc: List(#(String, types.Value))) -> BitString {
 fn document(doc: List(#(String, types.Value))) -> Entity {
   let doc =
     doc
-    |> list.reverse
     |> list.map(fn(kv) { encode_kv(kv) })
     |> bit_string.concat
 
@@ -66,7 +65,6 @@ fn array(list: List(types.Value)) -> Entity {
       item,
     )
   })
-  |> list.reverse
   |> document {
     Entity(kind: _, value: value) -> Entity(kind: types.array, value: value)
   }

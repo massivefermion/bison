@@ -78,7 +78,10 @@ fn decode_body(
                             Ok(value) ->
                               decode_body(
                                 rest,
-                                [#(key, types.Binary(value)), ..storage],
+                                list.append(
+                                  storage,
+                                  [#(key, types.Binary(value))],
+                                ),
                               )
                             Error(Nil) -> Error(Nil)
                           }
@@ -89,7 +92,7 @@ fn decode_body(
                       let <<value:little-float, rest:bit_string>> = rest
                       decode_body(
                         rest,
-                        [#(key, types.Double(value)), ..storage],
+                        list.append(storage, [#(key, types.Double(value))]),
                       )
                     }
                     kind if kind == object_id -> {
@@ -98,7 +101,7 @@ fn decode_body(
                         Ok(oid) ->
                           decode_body(
                             rest,
-                            [#(key, types.ObjectId(oid)), ..storage],
+                            list.append(storage, [#(key, types.ObjectId(oid))]),
                           )
                         Error(Nil) -> Error(Nil)
                       }
@@ -109,48 +112,57 @@ fn decode_body(
                         1 ->
                           decode_body(
                             rest,
-                            [#(key, types.Boolean(True)), ..storage],
+                            list.append(storage, [#(key, types.Boolean(True))]),
                           )
                         0 ->
                           decode_body(
                             rest,
-                            [#(key, types.Boolean(False)), ..storage],
+                            list.append(storage, [#(key, types.Boolean(False))]),
                           )
                         _ -> Error(Nil)
                       }
                     }
                     kind if kind == null ->
-                      decode_body(rest, [#(key, types.Null), ..storage])
+                      decode_body(
+                        rest,
+                        list.append(storage, [#(key, types.Null)]),
+                      )
                     kind if kind == min ->
-                      decode_body(rest, [#(key, types.Min), ..storage])
+                      decode_body(
+                        rest,
+                        list.append(storage, [#(key, types.Min)]),
+                      )
                     kind if kind == max ->
-                      decode_body(rest, [#(key, types.Max), ..storage])
+                      decode_body(
+                        rest,
+                        list.append(storage, [#(key, types.Max)]),
+                      )
                     kind if kind == int32 -> {
                       let <<value:32-little, rest:bit_string>> = rest
                       decode_body(
                         rest,
-                        [#(key, types.Integer(value)), ..storage],
+                        list.append(storage, [#(key, types.Integer(value))]),
                       )
                     }
                     kind if kind == int64 -> {
                       let <<value:64-little, rest:bit_string>> = rest
                       decode_body(
                         rest,
-                        [#(key, types.Integer(value)), ..storage],
+                        list.append(storage, [#(key, types.Integer(value))]),
                       )
                     }
                     kind if kind == datetime -> {
                       let <<value:64-little, rest:bit_string>> = rest
                       decode_body(
                         rest,
-                        [#(key, types.DateTime(value)), ..storage],
+                        list.append(storage, [#(key, types.DateTime(value))]),
                       )
                     }
                     kind if kind == timestamp -> {
                       let <<value:64-little-unsigned, rest:bit_string>> = rest
                       decode_body(
                         rest,
-                        [#(key, types.Timestamp(value)), ..storage],
+                        list.append(storage, [#(key, types.Timestamp(value))]),
                       )
                     }
                     kind if kind == string -> {
@@ -170,7 +182,10 @@ fn decode_body(
                                     Ok(rest) ->
                                       decode_body(
                                         rest,
-                                        [#(key, types.Str(str)), ..storage],
+                                        list.append(
+                                          storage,
+                                          [#(key, types.Str(str))],
+                                        ),
                                       )
                                     Error(Nil) -> Error(Nil)
                                   }
@@ -199,7 +214,10 @@ fn decode_body(
                                     Ok(rest) ->
                                       decode_body(
                                         rest,
-                                        [#(key, types.JS(str)), ..storage],
+                                        list.append(
+                                          storage,
+                                          [#(key, types.JS(str))],
+                                        ),
                                       )
                                     Error(Nil) -> Error(Nil)
                                   }
@@ -279,7 +297,8 @@ fn decode_body(
                               case doc {
                                 Ok(doc) ->
                                   case doc_size == bit_string.byte_size(rest) {
-                                    True -> Ok([#(key, doc), ..storage])
+                                    True ->
+                                      Ok(list.append(storage, [#(key, doc)]))
                                     False ->
                                       case bit_string.slice(
                                         rest,
@@ -289,7 +308,7 @@ fn decode_body(
                                         Ok(rest) ->
                                           decode_body(
                                             rest,
-                                            [#(key, doc), ..storage],
+                                            list.append(storage, [#(key, doc)]),
                                           )
                                         Error(Nil) -> Error(Nil)
                                       }
