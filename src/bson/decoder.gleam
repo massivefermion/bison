@@ -2,7 +2,6 @@ import gleam/int
 import gleam/pair
 import gleam/list
 import bson/binary
-import gleam/result
 import bson/object_id
 import gleam/bit_string
 import bson/types.{
@@ -239,41 +238,25 @@ fn decode_body(
                                 kind if kind == document -> Ok(doc)
                                 kind if kind == array ->
                                   case doc {
-                                    types.Document(doc) -> {
-                                      let list =
-                                        doc
-                                        |> list.map(fn(item) {
-                                          #(
-                                            item
-                                            |> pair.first
-                                            |> int.parse,
-                                            item
-                                            |> pair.second,
-                                          )
-                                        })
-                                      case list.any(
-                                        list,
-                                        fn(item) {
-                                          result.is_error(
-                                            item
-                                            |> pair.first,
-                                          )
-                                        },
-                                      ) {
-                                        True -> Error(Nil)
-                                        False ->
+                                    types.Document(doc) ->
+                                      case doc
+                                      |> list.try_map(fn(item) {
+                                        case item
+                                        |> pair.first
+                                        |> int.parse {
+                                          Ok(first) ->
+                                            Ok(#(
+                                              first,
+                                              item
+                                              |> pair.second,
+                                            ))
+                                          Error(Nil) -> Error(Nil)
+                                        }
+                                      }) {
+                                        Error(Nil) -> Error(Nil)
+                                        Ok(doc) ->
                                           Ok(types.Array(
-                                            list
-                                            |> list.map(fn(item) {
-                                              assert Ok(first) =
-                                                item
-                                                |> pair.first
-                                              #(
-                                                first,
-                                                item
-                                                |> pair.second,
-                                              )
-                                            })
+                                            doc
                                             |> list.sort(fn(a, b) {
                                               let a_index =
                                                 a
@@ -289,7 +272,6 @@ fn decode_body(
                                             }),
                                           ))
                                       }
-                                    }
                                     _ -> Error(Nil)
                                   }
                                 _ -> Error(Nil)
