@@ -19,9 +19,9 @@ gleam add gleam_bson
 
 - [x] support encoding and decoding basic bson types (null, string, int32, int64, double, boolean, objectId, array, document).
 - [x] support encoding and decoding min, max, timestamp, datetime and javascript bson types.
-- [x] support encoding and decoding the generic binary subtype.
+- [x] support encoding and decoding the generic, md5 and user-defined binary subtypes.
 - [ ] support encoding and decoding regex and decimal128 bson types.
-- [ ] support encoding and decoding other binary subtypes.
+- [ ] support encoding and decoding uuid and encrypted binary subtypes.
 - [ ] support generating new object-ids
 
 ## Usage
@@ -29,67 +29,64 @@ gleam add gleam_bson
 ### Encoding
 
 ```gleam
-import myapp.{Cat}
+import bson/md5
 import gleam/list
 import bson/types
 import bson.{encode}
-import bson/object_id.{from_string}
+import bson/object_id
 
 fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
-  case from_string(cat.id) {
-    Ok(id) ->
-      Ok(encode([
-        #("id", types.ObjectId(id)),
-        #("name", types.Str(cat.name)),
-        #("lives", types.Integer(cat.lives)),
-        #(
-          "nicknames",
-          types.Array(
-            cat.nicknames
-            |> list.map(fn(n) { types.Str(n) }),
-          ),
-        ),
-      ]))
+  try id = object_id.from_string(cat.id)
+  try checksum = md5.from_string(cat.checksum)
 
-    Error(Nil) -> Error(Nil)
-  }
+  Ok(encode([
+    #("id", types.ObjectId(id)),
+    #("name", types.Str(cat.name)),
+    #("lives", types.Integer(cat.lives)),
+    #(
+      "nicknames",
+      types.Array(
+        cat.nicknames
+        |> list.map(fn(n) { types.Str(n) }),
+      ),
+    ),
+    #("checksum", types.Binary(types.MD5(checksum))),
+  ]))
 }
 ```
 
 ### Decoding
 
 ```gleam
-import myapp.{Cat}
+import bson/md5
 import gleam/list
 import bson/types
 import bson.{decode}
-import bson/object_id.{to_string}
+import bson/object_id
 
 fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
-  case decode(data) {
-    Ok(doc) -> {
-      let [
-        #("id", types.ObjectId(id)),
-        #("name", types.Str(name)),
-        #("lives", types.Integer(lives)),
-        #("nicknames", types.Array(nicknames)),
-      ] = doc
+  try doc = decode(data)
 
-      Ok(Cat(
-        id: id
-        |> to_string,
-        name: name,
-        lives: lives,
-        nicknames: nicknames
-        |> list.map(fn(n) {
-          case n {
-            types.Str(n) -> n
-          }
-        }),
-      ))
-    }
+  let [
+    #("id", types.ObjectId(id)),
+    #("name", types.Str(name)),
+    #("lives", types.Integer(lives)),
+    #("nicknames", types.Array(nicknames)),
+    #("checksum", types.Binary(types.MD5(checksum))),
+  ] = doc
 
-    Error(Nil) -> Error(Nil)
-  }
+  Ok(Cat(
+    id: id
+    |> object_id.to_string,
+    name: name,
+    lives: lives,
+    nicknames: nicknames
+    |> list.map(fn(n) {
+      assert types.Str(n) = n
+      n
+    }),
+    checksum: checksum
+    |> md5.to_string,
+  ))
 }
 ```

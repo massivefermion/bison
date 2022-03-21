@@ -1,4 +1,6 @@
-import bson/binary.{Binary}
+import bson/md5.{MD5}
+import bson/custom.{Custom}
+import bson/generic.{Generic}
 import bson/object_id.{ObjectId}
 
 pub type Value {
@@ -16,6 +18,12 @@ pub type Value {
   Array(List(Value))
   ObjectId(ObjectId)
   Document(List(#(String, Value)))
+}
+
+pub type Binary {
+  MD5(MD5)
+  Custom(Custom)
+  Generic(Generic)
 }
 
 pub type Kind {
@@ -61,6 +69,8 @@ pub const min = Kind(code: <<0xFF>>)
 pub const max = Kind(code: <<0x7F>>)
 
 pub const generic = SubKind(code: <<0x0>>)
+
+pub const md5 = SubKind(code: <<0x5>>)
 
 pub const int32_min = -2_147_483_648
 

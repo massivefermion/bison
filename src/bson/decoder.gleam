@@ -1,12 +1,14 @@
+import bson/md5
 import gleam/int
 import gleam/pair
 import gleam/list
-import bson/binary
+import bson/custom
+import bson/generic
 import bson/object_id
 import gleam/bit_string
 import bson/types.{
   array, binary, boolean, datetime, document, double, generic, int32, int64, js,
-  max, min, null, object_id, string, timestamp,
+  max, md5, min, null, object_id, string, timestamp,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -23,15 +25,11 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
     True -> {
       let <<given_size:32-little-int, rest:bit_string>> = data
       case total_size == given_size {
-        True ->
-          case bit_string.slice(rest, 0, total_size - 4 - 1) {
-            Ok(body) ->
-              case decode_body(body, []) {
-                Ok(body) -> Ok(types.Document(body))
-                Error(Nil) -> Error(Nil)
-              }
-            Error(Nil) -> Error(Nil)
-          }
+        True -> {
+          try body = bit_string.slice(rest, 0, total_size - 4 - 1)
+          try body = decode_body(body, [])
+          Ok(types.Document(body))
+        }
         False -> Error(Nil)
       }
     }
@@ -48,270 +46,197 @@ fn decode_body(
     False -> {
       let <<code:8, data:bit_string>> = data
       let total_size = bit_string.byte_size(data)
-      case consume_till_zero(data, <<>>) {
-        Ok(key) -> {
-          let key_size = bit_string.byte_size(key)
-          case bit_string.to_string(key) {
-            Ok(key) ->
-              case bit_string.slice(
-                data,
-                key_size + 1,
-                total_size - key_size - 1,
-              ) {
-                Ok(rest) -> {
-                  let kind = types.Kind(code: <<code>>)
-                  case kind {
-                    kind if kind == binary -> {
-                      let <<
-                        byte_size:32-little-int,
-                        sub_code:8,
-                        rest:bit_string,
-                      >> = rest
-                      let given_size = byte_size * 8
-                      let <<value:size(given_size)-bit_string, rest:bit_string>> =
-                        rest
-                      let sub_kind = types.SubKind(code: <<sub_code>>)
-                      case sub_kind {
-                        sub_kind if sub_kind == generic ->
-                          case binary.from_bit_string(value) {
-                            Ok(value) ->
-                              decode_body(
-                                rest,
-                                list.append(
-                                  storage,
-                                  [#(key, types.Binary(value))],
-                                ),
-                              )
-                            Error(Nil) -> Error(Nil)
-                          }
-                        _ -> Error(Nil)
-                      }
-                    }
-                    kind if kind == double -> {
-                      let <<value:little-float, rest:bit_string>> = rest
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Double(value))]),
-                      )
-                    }
-                    kind if kind == object_id -> {
-                      let <<value:96-bit_string, rest:bit_string>> = rest
-                      case object_id.from_bit_string(value) {
-                        Ok(oid) ->
-                          decode_body(
-                            rest,
-                            list.append(storage, [#(key, types.ObjectId(oid))]),
-                          )
-                        Error(Nil) -> Error(Nil)
-                      }
-                    }
-                    kind if kind == boolean -> {
-                      let <<value:8, rest:bit_string>> = rest
-                      case value {
-                        1 ->
-                          decode_body(
-                            rest,
-                            list.append(storage, [#(key, types.Boolean(True))]),
-                          )
-                        0 ->
-                          decode_body(
-                            rest,
-                            list.append(storage, [#(key, types.Boolean(False))]),
-                          )
-                        _ -> Error(Nil)
-                      }
-                    }
-                    kind if kind == null ->
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Null)]),
-                      )
-                    kind if kind == min ->
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Min)]),
-                      )
-                    kind if kind == max ->
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Max)]),
-                      )
-                    kind if kind == int32 -> {
-                      let <<value:32-little, rest:bit_string>> = rest
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Integer(value))]),
-                      )
-                    }
-                    kind if kind == int64 -> {
-                      let <<value:64-little, rest:bit_string>> = rest
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Integer(value))]),
-                      )
-                    }
-                    kind if kind == datetime -> {
-                      let <<value:64-little, rest:bit_string>> = rest
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.DateTime(value))]),
-                      )
-                    }
-                    kind if kind == timestamp -> {
-                      let <<value:64-little-unsigned, rest:bit_string>> = rest
-                      decode_body(
-                        rest,
-                        list.append(storage, [#(key, types.Timestamp(value))]),
-                      )
-                    }
-                    kind if kind == string -> {
-                      let <<given_size:32-little-int, rest:bit_string>> = rest
-                      case consume_till_zero(rest, <<>>) {
-                        Ok(str) -> {
-                          let str_size = bit_string.byte_size(str)
-                          case given_size == str_size + 1 {
-                            True ->
-                              case bit_string.to_string(str) {
-                                Ok(str) ->
-                                  case bit_string.slice(
-                                    rest,
-                                    str_size + 1,
-                                    bit_string.byte_size(rest) - str_size - 1,
-                                  ) {
-                                    Ok(rest) ->
-                                      decode_body(
-                                        rest,
-                                        list.append(
-                                          storage,
-                                          [#(key, types.Str(str))],
-                                        ),
-                                      )
-                                    Error(Nil) -> Error(Nil)
-                                  }
-                                Error(Nil) -> Error(Nil)
-                              }
-                            False -> Error(Nil)
-                          }
-                        }
-                        Error(Nil) -> Error(Nil)
-                      }
-                    }
-                    kind if kind == js -> {
-                      let <<given_size:32-little-int, rest:bit_string>> = rest
-                      case consume_till_zero(rest, <<>>) {
-                        Ok(str) -> {
-                          let str_size = bit_string.byte_size(str)
-                          case given_size == str_size + 1 {
-                            True ->
-                              case bit_string.to_string(str) {
-                                Ok(str) ->
-                                  case bit_string.slice(
-                                    rest,
-                                    str_size + 1,
-                                    bit_string.byte_size(rest) - str_size - 1,
-                                  ) {
-                                    Ok(rest) ->
-                                      decode_body(
-                                        rest,
-                                        list.append(
-                                          storage,
-                                          [#(key, types.JS(str))],
-                                        ),
-                                      )
-                                    Error(Nil) -> Error(Nil)
-                                  }
-                                Error(Nil) -> Error(Nil)
-                              }
-                            False -> Error(Nil)
-                          }
-                        }
-                        Error(Nil) -> Error(Nil)
-                      }
-                    }
-                    kind if kind == document || kind == array -> {
-                      let <<doc_size:32-little-int, _:bit_string>> = rest
-                      case bit_string.slice(rest, 0, doc_size) {
-                        Ok(doc) ->
-                          case decode_document(doc) {
-                            Ok(doc) -> {
-                              let doc = case kind {
-                                kind if kind == document -> Ok(doc)
-                                kind if kind == array ->
-                                  case doc {
-                                    types.Document(doc) ->
-                                      case doc
-                                      |> list.try_map(fn(item) {
-                                        case item
-                                        |> pair.first
-                                        |> int.parse {
-                                          Ok(first) ->
-                                            Ok(#(
-                                              first,
-                                              item
-                                              |> pair.second,
-                                            ))
-                                          Error(Nil) -> Error(Nil)
-                                        }
-                                      }) {
-                                        Error(Nil) -> Error(Nil)
-                                        Ok(doc) ->
-                                          Ok(types.Array(
-                                            doc
-                                            |> list.sort(fn(a, b) {
-                                              let a_index =
-                                                a
-                                                |> pair.first
-                                              let b_index =
-                                                b
-                                                |> pair.first
-                                              int.compare(a_index, b_index)
-                                            })
-                                            |> list.map(fn(item) {
-                                              item
-                                              |> pair.second
-                                            }),
-                                          ))
-                                      }
-                                    _ -> Error(Nil)
-                                  }
-                                _ -> Error(Nil)
-                              }
-                              case doc {
-                                Ok(doc) ->
-                                  case doc_size == bit_string.byte_size(rest) {
-                                    True ->
-                                      Ok(list.append(storage, [#(key, doc)]))
-                                    False ->
-                                      case bit_string.slice(
-                                        rest,
-                                        doc_size,
-                                        bit_string.byte_size(rest) - doc_size,
-                                      ) {
-                                        Ok(rest) ->
-                                          decode_body(
-                                            rest,
-                                            list.append(storage, [#(key, doc)]),
-                                          )
-                                        Error(Nil) -> Error(Nil)
-                                      }
-                                  }
-                                Error(Nil) -> Error(Nil)
-                              }
-                            }
-                            Error(Nil) -> Error(Nil)
-                          }
-                        Error(Nil) -> Error(Nil)
-                      }
-                    }
-                    _ -> Error(Nil)
-                  }
-                }
-                Error(Nil) -> Error(Nil)
-              }
-            Error(Nil) -> Error(Nil)
+      try key = consume_till_zero(data, <<>>)
+      let key_size = bit_string.byte_size(key)
+      try key = bit_string.to_string(key)
+      try rest = bit_string.slice(data, key_size + 1, total_size - key_size - 1)
+      let kind = types.Kind(code: <<code>>)
+      case kind {
+        kind if kind == binary -> {
+          let <<byte_size:32-little-int, sub_code:8, rest:bit_string>> = rest
+          let given_size = byte_size * 8
+          let <<value:size(given_size)-bit_string, rest:bit_string>> = rest
+          let sub_kind = types.SubKind(code: <<sub_code>>)
+          case sub_kind {
+            sub_kind if sub_kind == generic -> {
+              try value = generic.from_bit_string(value)
+              decode_body(
+                rest,
+                list.append(
+                  storage,
+                  [#(key, types.Binary(types.Generic(value)))],
+                ),
+              )
+            }
+            sub_kind if sub_kind == md5 -> {
+              try value = md5.from_bit_string(value)
+              decode_body(
+                rest,
+                list.append(storage, [#(key, types.Binary(types.MD5(value)))]),
+              )
+            }
+            _ if sub_code >= 0x80 -> {
+              try value = custom.from_bit_string_with_code(sub_code, value)
+              decode_body(
+                rest,
+                list.append(
+                  storage,
+                  [#(key, types.Binary(types.Custom(value)))],
+                ),
+              )
+            }
+            _ -> Error(Nil)
           }
         }
-        Error(Nil) -> Error(Nil)
+        kind if kind == double -> {
+          let <<value:little-float, rest:bit_string>> = rest
+          decode_body(rest, list.append(storage, [#(key, types.Double(value))]))
+        }
+        kind if kind == object_id -> {
+          let <<value:96-bit_string, rest:bit_string>> = rest
+          try oid = object_id.from_bit_string(value)
+          decode_body(rest, list.append(storage, [#(key, types.ObjectId(oid))]))
+        }
+        kind if kind == boolean -> {
+          let <<value:8, rest:bit_string>> = rest
+          case value {
+            1 ->
+              decode_body(
+                rest,
+                list.append(storage, [#(key, types.Boolean(True))]),
+              )
+            0 ->
+              decode_body(
+                rest,
+                list.append(storage, [#(key, types.Boolean(False))]),
+              )
+            _ -> Error(Nil)
+          }
+        }
+        kind if kind == null ->
+          decode_body(rest, list.append(storage, [#(key, types.Null)]))
+        kind if kind == min ->
+          decode_body(rest, list.append(storage, [#(key, types.Min)]))
+        kind if kind == max ->
+          decode_body(rest, list.append(storage, [#(key, types.Max)]))
+        kind if kind == int32 -> {
+          let <<value:32-little, rest:bit_string>> = rest
+          decode_body(
+            rest,
+            list.append(storage, [#(key, types.Integer(value))]),
+          )
+        }
+        kind if kind == int64 -> {
+          let <<value:64-little, rest:bit_string>> = rest
+          decode_body(
+            rest,
+            list.append(storage, [#(key, types.Integer(value))]),
+          )
+        }
+        kind if kind == datetime -> {
+          let <<value:64-little, rest:bit_string>> = rest
+          decode_body(
+            rest,
+            list.append(storage, [#(key, types.DateTime(value))]),
+          )
+        }
+        kind if kind == timestamp -> {
+          let <<value:64-little-unsigned, rest:bit_string>> = rest
+          decode_body(
+            rest,
+            list.append(storage, [#(key, types.Timestamp(value))]),
+          )
+        }
+        kind if kind == string -> {
+          let <<given_size:32-little-int, rest:bit_string>> = rest
+          try str = consume_till_zero(rest, <<>>)
+          let str_size = bit_string.byte_size(str)
+          case given_size == str_size + 1 {
+            True -> {
+              try str = bit_string.to_string(str)
+              try rest =
+                bit_string.slice(
+                  rest,
+                  str_size + 1,
+                  bit_string.byte_size(rest) - str_size - 1,
+                )
+              decode_body(rest, list.append(storage, [#(key, types.Str(str))]))
+            }
+            False -> Error(Nil)
+          }
+        }
+        kind if kind == js -> {
+          let <<given_size:32-little-int, rest:bit_string>> = rest
+          try str = consume_till_zero(rest, <<>>)
+          let str_size = bit_string.byte_size(str)
+          case given_size == str_size + 1 {
+            True -> {
+              try str = bit_string.to_string(str)
+              try rest =
+                bit_string.slice(
+                  rest,
+                  str_size + 1,
+                  bit_string.byte_size(rest) - str_size - 1,
+                )
+              decode_body(rest, list.append(storage, [#(key, types.JS(str))]))
+            }
+            False -> Error(Nil)
+          }
+        }
+        kind if kind == document || kind == array -> {
+          let <<doc_size:32-little-int, _:bit_string>> = rest
+          try doc = bit_string.slice(rest, 0, doc_size)
+          try types.Document(doc) = decode_document(doc)
+          try doc = case kind {
+            kind if kind == document -> Ok(types.Document(doc))
+            kind if kind == array -> {
+              try doc =
+                doc
+                |> list.try_map(fn(item) {
+                  try first =
+                    item
+                    |> pair.first
+                    |> int.parse
+                  Ok(#(
+                    first,
+                    item
+                    |> pair.second,
+                  ))
+                })
+              Ok(types.Array(
+                doc
+                |> list.sort(fn(a, b) {
+                  let a_index =
+                    a
+                    |> pair.first
+                  let b_index =
+                    b
+                    |> pair.first
+                  int.compare(a_index, b_index)
+                })
+                |> list.map(fn(item) {
+                  item
+                  |> pair.second
+                }),
+              ))
+            }
+            _ -> Error(Nil)
+          }
+          case doc_size == bit_string.byte_size(rest) {
+            True -> Ok(list.append(storage, [#(key, doc)]))
+            False ->
+              case bit_string.slice(
+                rest,
+                doc_size,
+                bit_string.byte_size(rest) - doc_size,
+              ) {
+                Ok(rest) ->
+                  decode_body(rest, list.append(storage, [#(key, doc)]))
+                Error(Nil) -> Error(Nil)
+              }
+          }
+        }
+        _ -> Error(Nil)
       }
     }
   }
