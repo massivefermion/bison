@@ -151,7 +151,7 @@ fn custom(value: custom.Custom) -> Entity {
 
   Entity(
     kind: types.binary,
-    value: [<<length:32-little>>, code, value]
+    value: [<<length:32-little>>, <<code>>, value]
     |> bit_string.concat,
   )
 }

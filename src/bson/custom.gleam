@@ -8,7 +8,7 @@ pub opaque type Custom {
 
 pub fn to_bit_string_with_code(custom: Custom) {
   case custom {
-    Custom(code, value) -> #(code, value)
+    Custom(code: <<code>>, value: value) -> #(code, value)
   }
 }
 
