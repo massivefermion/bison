@@ -18,9 +18,9 @@ gleam add gleam_bson
 ## Roadmap
 
 - [x] support encoding and decoding basic bson types (null, string, int32, int64, double, boolean, objectId, array, document).
-- [x] support encoding and decoding min, max, timestamp, datetime and javascript bson types.
+- [x] support encoding and decoding min, max, timestamp, datetime, javascript and regex bson types.
 - [x] support encoding and decoding the generic, md5 and user-defined binary subtypes.
-- [ ] support encoding and decoding regex and decimal128 bson types.
+- [ ] support encoding and decoding decimal128 bson type.
 - [ ] support encoding and decoding uuid and encrypted binary subtypes.
 - [ ] support generating new object-ids
 
@@ -51,6 +51,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
       ),
     ),
     #("checksum", types.Binary(types.MD5(checksum))),
+    #("name_pattern", types.Regex(#("[a-z][a-z0-9]+", "")))
   ]))
 }
 ```
@@ -73,6 +74,7 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
     #("lives", types.Integer(lives)),
     #("nicknames", types.Array(nicknames)),
     #("checksum", types.Binary(types.MD5(checksum))),
+    #("name_pattern", types.Regex(#(pattern, options)))
   ] = doc
 
   Ok(Cat(

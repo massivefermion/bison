@@ -51,6 +51,7 @@ fn encode_kv(pair: #(String, types.Value)) -> BitString {
     types.Binary(types.MD5(value)) -> md5(value)
     types.Binary(types.Custom(value)) -> custom(value)
     types.Binary(types.Generic(value)) -> generic(value)
+    types.Regex(#(pattern, options)) -> regex(pattern, options)
   }
 
   case value {
@@ -165,6 +166,14 @@ fn generic(value: generic.Generic) -> Entity {
   Entity(
     kind: types.binary,
     value: [<<length:32-little>>, types.generic.code, value]
+    |> bit_string.concat,
+  )
+}
+
+fn regex(pattern: String, options: String) -> Entity {
+  Entity(
+    kind: types.regex,
+    value: [<<pattern:utf8, 0, options:utf8, 0>>]
     |> bit_string.concat,
   )
 }

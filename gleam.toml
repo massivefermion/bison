@@ -1,5 +1,5 @@
 name = "gleam_bson"
-version = "0.10.1"
+version = "0.11.0"
 
 licences = ["Apache-2.0"]
 description = "A bson encoder and decoder written in gleam"

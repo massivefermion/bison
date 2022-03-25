@@ -1,3 +1,4 @@
+import gleam/io
 import bson/md5
 import gleam/int
 import gleam/pair
@@ -8,7 +9,7 @@ import bson/object_id
 import gleam/bit_string
 import bson/types.{
   array, binary, boolean, datetime, document, double, generic, int32, int64, js,
-  max, md5, min, null, object_id, string, timestamp,
+  max, md5, min, null, object_id, regex, string, timestamp,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -145,6 +146,20 @@ fn decode_body(
           decode_body(
             rest,
             list.append(storage, [#(key, types.Timestamp(value))]),
+          )
+        }
+        kind if kind == regex -> {
+          try pattern_bytes = consume_till_zero(rest, <<>>)
+          let pattern_size = { bit_string.byte_size(pattern_bytes) + 1 } * 8
+          let <<_:size(pattern_size), rest:bit_string>> = rest
+          try options_bytes = consume_till_zero(rest, <<>>)
+          let options_size = { bit_string.byte_size(options_bytes) + 1 } * 8
+          let <<_:size(options_size), rest:bit_string>> = rest
+          try pattern = bit_string.to_string(pattern_bytes)
+          try options = bit_string.to_string(options_bytes)
+          decode_body(
+            rest,
+            list.append(storage, [#(key, types.Regex(#(pattern, options)))]),
           )
         }
         kind if kind == string -> {

@@ -17,6 +17,7 @@ pub type Value {
   Timestamp(Int)
   Array(List(Value))
   ObjectId(ObjectId)
+  Regex(#(String, String))
   Document(List(#(String, Value)))
 }
 
