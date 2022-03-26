@@ -1,6 +1,7 @@
 import gleam/io
 import bson/md5
 import gleam/int
+import bson/uuid
 import gleam/pair
 import gleam/list
 import bson/custom
@@ -9,7 +10,7 @@ import bson/object_id
 import gleam/bit_string
 import bson/types.{
   array, binary, boolean, datetime, document, double, generic, int32, int64, js,
-  max, md5, min, null, object_id, regex, string, timestamp,
+  max, md5, min, null, object_id, regex, string, timestamp, uuid,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -74,6 +75,13 @@ fn decode_body(
               decode_body(
                 rest,
                 list.append(storage, [#(key, types.Binary(types.MD5(value)))]),
+              )
+            }
+            sub_kind if sub_kind == uuid -> {
+              try value = uuid.from_bit_string(value)
+              decode_body(
+                rest,
+                list.append(storage, [#(key, types.Binary(types.UUID(value)))]),
               )
             }
             _ if sub_code >= 0x80 -> {

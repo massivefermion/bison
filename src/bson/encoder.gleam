@@ -1,5 +1,6 @@
 import bson/md5
 import gleam/int
+import bson/uuid
 import gleam/list
 import bson/types
 import bson/custom
@@ -49,6 +50,7 @@ fn encode_kv(pair: #(String, types.Value)) -> BitString {
     types.ObjectId(value) -> object_id(value)
     types.Timestamp(value) -> timestamp(value)
     types.Binary(types.MD5(value)) -> md5(value)
+    types.Binary(types.UUID(value)) -> uuid(value)
     types.Binary(types.Custom(value)) -> custom(value)
     types.Binary(types.Generic(value)) -> generic(value)
     types.Regex(#(pattern, options)) -> regex(pattern, options)
@@ -140,6 +142,19 @@ fn md5(value: md5.MD5) -> Entity {
   Entity(
     kind: types.binary,
     value: [<<length:32-little>>, types.md5.code, value]
+    |> bit_string.concat,
+  )
+}
+
+fn uuid(value: uuid.UUID) -> Entity {
+  let value =
+    value
+    |> uuid.to_bit_string
+  let length = bit_string.byte_size(value)
+
+  Entity(
+    kind: types.binary,
+    value: [<<length:32-little>>, types.uuid.code, value]
     |> bit_string.concat,
   )
 }
