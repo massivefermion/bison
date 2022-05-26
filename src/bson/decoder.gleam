@@ -1,4 +1,3 @@
-import gleam/io
 import bson/md5
 import gleam/int
 import bson/uuid
