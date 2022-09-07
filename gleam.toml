@@ -10,7 +10,7 @@ links = [
 repository = {type = "github", user = "massivefermion", repo = "gleam_bson"}
 
 [dependencies]
-gleam_stdlib = "~> 0.21"
+gleam_stdlib = "~> 0.22"
 
 [dev-dependencies]
 gleeunit = "~> 0.6"
