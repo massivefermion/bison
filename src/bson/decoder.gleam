@@ -8,8 +8,9 @@ import bson/generic
 import bson/object_id
 import gleam/bit_string
 import bson/types.{
-  array, binary, boolean, datetime, document, double, generic, int32, int64, js,
-  max, md5, min, null, object_id, regex, string, timestamp, uuid,
+  array, binary, boolean, datetime, document, double, generic as generic_kind,
+  int32, int64, js, max, md5 as md5_kind, min, null, object_id as object_id_kind,
+  regex, string, timestamp, uuid as uuid_kind,
 }
 
 pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
@@ -59,7 +60,7 @@ fn decode_body(
           let <<value:size(given_size)-bit_string, rest:bit_string>> = rest
           let sub_kind = types.SubKind(code: <<sub_code>>)
           case sub_kind {
-            sub_kind if sub_kind == generic -> {
+            sub_kind if sub_kind == generic_kind -> {
               try value = generic.from_bit_string(value)
               decode_body(
                 rest,
@@ -69,14 +70,14 @@ fn decode_body(
                 ),
               )
             }
-            sub_kind if sub_kind == md5 -> {
+            sub_kind if sub_kind == md5_kind -> {
               try value = md5.from_bit_string(value)
               decode_body(
                 rest,
                 list.append(storage, [#(key, types.Binary(types.MD5(value)))]),
               )
             }
-            sub_kind if sub_kind == uuid -> {
+            sub_kind if sub_kind == uuid_kind -> {
               try value = uuid.from_bit_string(value)
               decode_body(
                 rest,
@@ -100,7 +101,7 @@ fn decode_body(
           let <<value:little-float, rest:bit_string>> = rest
           decode_body(rest, list.append(storage, [#(key, types.Double(value))]))
         }
-        kind if kind == object_id -> {
+        kind if kind == object_id_kind -> {
           let <<value:96-bit_string, rest:bit_string>> = rest
           try oid = object_id.from_bit_string(value)
           decode_body(rest, list.append(storage, [#(key, types.ObjectId(oid))]))
@@ -247,11 +248,13 @@ fn decode_body(
           case doc_size == bit_string.byte_size(rest) {
             True -> Ok(list.append(storage, [#(key, doc)]))
             False ->
-              case bit_string.slice(
-                rest,
-                doc_size,
-                bit_string.byte_size(rest) - doc_size,
-              ) {
+              case
+                bit_string.slice(
+                  rest,
+                  doc_size,
+                  bit_string.byte_size(rest) - doc_size,
+                )
+              {
                 Ok(rest) ->
                   decode_body(rest, list.append(storage, [#(key, doc)]))
                 Error(Nil) -> Error(Nil)
