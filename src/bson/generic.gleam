@@ -13,9 +13,7 @@ pub fn to_string(generic: Generic) -> Result(String, Nil) {
 
 pub fn to_int_list(generic: Generic) -> List(Int) {
   case generic {
-    Generic(data) ->
-      data
-      |> to_int_list_internal([])
+    Generic(data) -> to_int_list_internal(data, [])
   }
 }
 
@@ -30,16 +28,8 @@ pub fn from_string(data: String) -> Generic {
 }
 
 pub fn from_int_list(data: List(Int)) -> Generic {
-  Generic(
-    data
-    |> list.fold(
-      <<>>,
-      fn(acc, code) {
-        acc
-        |> bit_string.append(<<code>>)
-      },
-    ),
-  )
+  list.fold(data, <<>>, fn(acc, code) { bit_string.append(acc, <<code>>) })
+  |> Generic
 }
 
 pub fn from_bit_string(data: BitString) -> Result(Generic, Nil) {
@@ -54,7 +44,9 @@ fn to_int_list_internal(remaining: BitString, storage: List(Int)) -> List(Int) {
 
   let new_storage =
     storage
-    |> list.append([num])
+    |> list.reverse
+    |> list.prepend(num)
+    |> list.reverse
 
   case bit_string.byte_size(remaining) == 0 {
     True -> new_storage

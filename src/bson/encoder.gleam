@@ -85,16 +85,11 @@ fn string(value: String) -> Entity {
   Entity(kind: types.string, value: <<length:32-little, value:utf8, 0>>)
 }
 
-fn array(list: List(types.Value)) -> Entity {
-  case list
-  |> list.index_map(fn(index, item) {
-    #(
-      index
-      |> int.to_string,
-      item,
-    )
-  })
-  |> document {
+fn array(value: List(types.Value)) -> Entity {
+  case
+    list.index_map(value, fn(index, item) { #(int.to_string(index), item) })
+    |> document
+  {
     Entity(kind: _, value: value) -> Entity(kind: types.array, value: value)
   }
 }
@@ -122,11 +117,7 @@ fn datetime(value: Int) -> Entity {
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {
-  Entity(
-    kind: types.object_id,
-    value: value
-    |> object_id.to_bit_string,
-  )
+  Entity(kind: types.object_id, value: object_id.to_bit_string(value))
 }
 
 fn timestamp(value: Int) -> Entity {
@@ -134,9 +125,7 @@ fn timestamp(value: Int) -> Entity {
 }
 
 fn md5(value: md5.MD5) -> Entity {
-  let value =
-    value
-    |> md5.to_bit_string
+  let value = md5.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
   Entity(
@@ -147,9 +136,7 @@ fn md5(value: md5.MD5) -> Entity {
 }
 
 fn uuid(value: uuid.UUID) -> Entity {
-  let value =
-    value
-    |> uuid.to_bit_string
+  let value = uuid.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
   Entity(
@@ -160,9 +147,7 @@ fn uuid(value: uuid.UUID) -> Entity {
 }
 
 fn custom(value: custom.Custom) -> Entity {
-  let #(code, value) =
-    value
-    |> custom.to_bit_string_with_code
+  let #(code, value) = custom.to_bit_string_with_code(value)
   let length = bit_string.byte_size(value)
 
   Entity(
@@ -173,9 +158,7 @@ fn custom(value: custom.Custom) -> Entity {
 }
 
 fn generic(value: generic.Generic) -> Entity {
-  let value =
-    value
-    |> generic.to_bit_string
+  let value = generic.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
   Entity(
