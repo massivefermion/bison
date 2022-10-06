@@ -20,9 +20,9 @@ gleam add gleam_bson
 - [x] support encoding and decoding basic bson types (null, string, int32, int64, double, boolean, objectId, array, document).
 - [x] support encoding and decoding min, max, timestamp, datetime, javascript and regex bson types.
 - [x] support encoding and decoding the generic, md5, uuid and user-defined binary subtypes.
+- [x] support generating new object-ids
 - [ ] support encoding and decoding decimal128 bson type.
 - [ ] support encoding and decoding encrypted binary subtype.
-- [ ] support generating new object-ids
 
 ## Usage
 
