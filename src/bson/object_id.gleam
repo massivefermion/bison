@@ -123,13 +123,7 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
             let <<num:8>> = <<high:4, low:4>>
             num
           })
-          |> list.fold(
-            <<>>,
-            fn(acc, code) {
-              acc
-              |> bit_string.append(<<code>>)
-            },
-          )
+          |> list.fold(<<>>, fn(acc, code) { bit_string.append(acc, <<code>>) })
           |> ObjectId
           |> Ok
         Error(Nil) -> Error(Nil)

@@ -302,7 +302,7 @@ fn decode_body(
                     int.compare(a_index, b_index)
                   },
                 )
-                |> list.map(fn(item) { pair.second(item) }),
+                |> list.map(pair.second),
               )
               |> Ok
             }

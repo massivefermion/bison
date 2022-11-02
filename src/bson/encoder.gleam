@@ -21,7 +21,7 @@ pub fn encode(doc: List(#(String, types.Value))) -> BitString {
 fn document(doc: List(#(String, types.Value))) -> Entity {
   let doc =
     doc
-    |> list.map(fn(kv) { encode_kv(kv) })
+    |> list.map(encode_kv)
     |> bit_string.concat
 
   let size = bit_string.byte_size(doc) + 5

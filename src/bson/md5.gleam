@@ -136,15 +136,11 @@ fn to_int_list_internal(remaining: BitString, storage: List(Int)) -> List(Int) {
 }
 
 fn to_digit(char: String) -> Result(Int, Nil) {
-  let <<code>> =
-    char
-    |> bit_string.from_string
+  let <<code>> = bit_string.from_string(char)
 
   case code {
     code if code >= 48 && code <= 57 -> {
-      let <<_:4, num:4>> =
-        char
-        |> bit_string.from_string
+      let <<_:4, num:4>> = bit_string.from_string(char)
       Ok(num)
     }
 
