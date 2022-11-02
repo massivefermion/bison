@@ -47,7 +47,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
       "nicknames",
       types.Array(
         cat.nicknames
-        |> list.map(fn(n) { types.Str(n) }),
+        |> list.map(types.Str),
       ),
     ),
     #("checksum", types.Binary(types.MD5(checksum))),
