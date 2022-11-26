@@ -3,6 +3,7 @@ import gleam/int
 import bson/uuid
 import gleam/pair
 import gleam/list
+import gleam/queue
 import bson/custom
 import bson/generic
 import bson/object_id
@@ -29,7 +30,7 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
       case total_size == given_size {
         True -> {
           try body = bit_string.slice(rest, 0, total_size - 4 - 1)
-          try body = decode_body(body, [])
+          try body = decode_body(body, queue.new())
           Ok(types.Document(body))
         }
         False -> Error(Nil)
@@ -41,10 +42,14 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
 
 fn decode_body(
   data: BitString,
-  storage: List(#(String, types.Value)),
+  storage: queue.Queue(#(String, types.Value)),
 ) -> Result(List(#(String, types.Value)), Nil) {
   case bit_string.byte_size(data) {
-    0 -> Ok(storage)
+    0 ->
+      storage
+      |> queue.to_list
+      |> Ok
+
     _ -> {
       let <<code:8, data:bit_string>> = data
       let total_size = bit_string.byte_size(data)
@@ -62,42 +67,38 @@ fn decode_body(
           case sub_kind {
             sub_kind if sub_kind == generic_kind -> {
               try value = generic.from_bit_string(value)
-              decode_body(
+              recurse_with_new_kv(
                 rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Binary(types.Generic(value))))
-                |> list.reverse,
+                storage,
+                key,
+                types.Binary(types.Generic(value)),
               )
             }
             sub_kind if sub_kind == md5_kind -> {
               try value = md5.from_bit_string(value)
-              decode_body(
+              recurse_with_new_kv(
                 rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Binary(types.MD5(value))))
-                |> list.reverse,
+                storage,
+                key,
+                types.Binary(types.MD5(value)),
               )
             }
             sub_kind if sub_kind == uuid_kind -> {
               try value = uuid.from_bit_string(value)
-              decode_body(
+              recurse_with_new_kv(
                 rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Binary(types.UUID(value))))
-                |> list.reverse,
+                storage,
+                key,
+                types.Binary(types.UUID(value)),
               )
             }
             _ if sub_code >= 0x80 -> {
               try value = custom.from_bit_string_with_code(sub_code, value)
-              decode_body(
+              recurse_with_new_kv(
                 rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Binary(types.Custom(value))))
-                |> list.reverse,
+                storage,
+                key,
+                types.Binary(types.Custom(value)),
               )
             }
             _ -> Error(Nil)
@@ -105,110 +106,39 @@ fn decode_body(
         }
         kind if kind == double -> {
           let <<value:little-float, rest:bit_string>> = rest
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Double(value)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Double(value))
         }
         kind if kind == object_id_kind -> {
           let <<value:96-bit_string, rest:bit_string>> = rest
           try oid = object_id.from_bit_string(value)
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.ObjectId(oid)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.ObjectId(oid))
         }
         kind if kind == boolean -> {
           let <<value:8, rest:bit_string>> = rest
-          case value {
-            1 ->
-              decode_body(
-                rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Boolean(True)))
-                |> list.reverse,
-              )
-            0 ->
-              decode_body(
-                rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Boolean(False)))
-                |> list.reverse,
-              )
-            _ -> Error(Nil)
-          }
+          use value <- decode_boolean(value)
+          recurse_with_new_kv(rest, storage, key, types.Boolean(value))
         }
         kind if kind == null ->
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Null))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Null)
         kind if kind == min ->
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Min))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Min)
         kind if kind == max ->
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Max))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Max)
         kind if kind == int32 -> {
           let <<value:32-little, rest:bit_string>> = rest
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Integer(value)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Integer(value))
         }
         kind if kind == int64 -> {
           let <<value:64-little, rest:bit_string>> = rest
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Integer(value)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Integer(value))
         }
         kind if kind == datetime -> {
           let <<value:64-little, rest:bit_string>> = rest
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.DateTime(value)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.DateTime(value))
         }
         kind if kind == timestamp -> {
           let <<value:64-little-unsigned, rest:bit_string>> = rest
-          decode_body(
-            rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Timestamp(value)))
-            |> list.reverse,
-          )
+          recurse_with_new_kv(rest, storage, key, types.Timestamp(value))
         }
         kind if kind == regex -> {
           try pattern_bytes = consume_till_zero(rest, <<>>)
@@ -219,12 +149,11 @@ fn decode_body(
           let <<_:size(options_size), rest:bit_string>> = rest
           try pattern = bit_string.to_string(pattern_bytes)
           try options = bit_string.to_string(options_bytes)
-          decode_body(
+          recurse_with_new_kv(
             rest,
-            storage
-            |> list.reverse
-            |> list.prepend(#(key, types.Regex(#(pattern, options))))
-            |> list.reverse,
+            storage,
+            key,
+            types.Regex(#(pattern, options)),
           )
         }
         kind if kind == string -> {
@@ -240,13 +169,7 @@ fn decode_body(
                   str_size + 1,
                   bit_string.byte_size(rest) - str_size - 1,
                 )
-              decode_body(
-                rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.Str(str)))
-                |> list.reverse,
-              )
+              recurse_with_new_kv(rest, storage, key, types.Str(str))
             }
             False -> Error(Nil)
           }
@@ -264,13 +187,7 @@ fn decode_body(
                   str_size + 1,
                   bit_string.byte_size(rest) - str_size - 1,
                 )
-              decode_body(
-                rest,
-                storage
-                |> list.reverse
-                |> list.prepend(#(key, types.JS(str)))
-                |> list.reverse,
-              )
+              recurse_with_new_kv(rest, storage, key, types.JS(str))
             }
             False -> Error(Nil)
           }
@@ -286,53 +203,27 @@ fn decode_body(
                 list.try_map(
                   doc,
                   fn(item) {
-                    try first =
-                      item
-                      |> pair.first
-                      |> int.parse
-                    Ok(#(first, pair.second(item)))
+                    try first = int.parse(item.0)
+                    Ok(#(first, item.1))
                   },
                 )
               types.Array(
-                list.sort(
-                  doc,
-                  fn(a, b) {
-                    let a_index = pair.first(a)
-                    let b_index = pair.first(b)
-                    int.compare(a_index, b_index)
-                  },
-                )
+                list.sort(doc, fn(a, b) { int.compare(a.0, b.0) })
                 |> list.map(pair.second),
               )
               |> Ok
             }
             _ -> Error(Nil)
           }
-          case doc_size == bit_string.byte_size(rest) {
-            True ->
-              storage
-              |> list.reverse
-              |> list.prepend(#(key, doc))
-              |> list.reverse
-              |> Ok
-            False ->
-              case
-                bit_string.slice(
-                  rest,
-                  doc_size,
-                  bit_string.byte_size(rest) - doc_size,
-                )
-              {
-                Ok(rest) ->
-                  decode_body(
-                    rest,
-                    storage
-                    |> list.reverse
-                    |> list.prepend(#(key, doc))
-                    |> list.reverse,
-                  )
-                Error(Nil) -> Error(Nil)
-              }
+          case
+            bit_string.slice(
+              rest,
+              doc_size,
+              bit_string.byte_size(rest) - doc_size,
+            )
+          {
+            Ok(rest) -> recurse_with_new_kv(rest, storage, key, doc)
+            Error(Nil) -> Error(Nil)
           }
         }
         _ -> Error(Nil)
@@ -354,5 +245,17 @@ fn consume_till_zero(
         _ -> consume_till_zero(rest, bit_string.append(storage, <<ch>>))
       }
     }
+  }
+}
+
+fn recurse_with_new_kv(rest, storage, key, value) {
+  decode_body(rest, queue.push_back(storage, #(key, value)))
+}
+
+fn decode_boolean(value, rest) {
+  case value {
+    0 -> rest(False)
+    1 -> rest(True)
+    _ -> Error(Nil)
   }
 }
