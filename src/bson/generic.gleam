@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/queue
 import gleam/bit_string
 
 pub opaque type Generic {
@@ -13,7 +14,7 @@ pub fn to_string(generic: Generic) -> Result(String, Nil) {
 
 pub fn to_int_list(generic: Generic) -> List(Int) {
   case generic {
-    Generic(data) -> to_int_list_internal(data, [])
+    Generic(data) -> to_int_list_internal(data, queue.new())
   }
 }
 
@@ -39,17 +40,16 @@ pub fn from_bit_string(data: BitString) -> Result(Generic, Nil) {
   }
 }
 
-fn to_int_list_internal(remaining: BitString, storage: List(Int)) -> List(Int) {
+fn to_int_list_internal(
+  remaining: BitString,
+  storage: queue.Queue(Int),
+) -> List(Int) {
   let <<num:8, remaining:binary>> = remaining
 
-  let new_storage =
-    storage
-    |> list.reverse
-    |> list.prepend(num)
-    |> list.reverse
+  let new_storage = queue.push_back(storage, num)
 
   case bit_string.byte_size(remaining) == 0 {
-    True -> new_storage
+    True -> queue.to_list(new_storage)
     False -> to_int_list_internal(remaining, new_storage)
   }
 }

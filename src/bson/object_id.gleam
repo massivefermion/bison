@@ -1,5 +1,6 @@
 import gleam/int
 import gleam/list
+import gleam/queue
 import gleam/crypto
 import gleam/string
 import gleam/bit_string
@@ -48,7 +49,7 @@ pub fn to_string(id: ObjectId) -> String {
 
 pub fn to_int_list(id: ObjectId) -> List(Int) {
   case id {
-    ObjectId(value) -> to_int_list_internal(value, [])
+    ObjectId(value) -> to_int_list_internal(value, queue.new())
   }
 }
 
@@ -154,17 +155,16 @@ fn to_string_internal(remaining: BitString, storage: String) -> String {
   }
 }
 
-fn to_int_list_internal(remaining: BitString, storage: List(Int)) -> List(Int) {
+fn to_int_list_internal(
+  remaining: BitString,
+  storage: queue.Queue(Int),
+) -> List(Int) {
   let <<num:8, remaining:binary>> = remaining
 
-  let new_storage =
-    storage
-    |> list.reverse
-    |> list.prepend(num)
-    |> list.reverse
+  let new_storage = queue.push_back(storage, num)
 
   case bit_string.byte_size(remaining) {
-    0 -> new_storage
+    0 -> queue.to_list(new_storage)
     _ -> to_int_list_internal(remaining, new_storage)
   }
 }

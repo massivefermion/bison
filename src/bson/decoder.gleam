@@ -3,7 +3,6 @@ import gleam/int
 import bson/uuid
 import gleam/pair
 import gleam/list
-import gleam/queue
 import bson/custom
 import bson/generic
 import bson/object_id
@@ -30,7 +29,7 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
       case total_size == given_size {
         True -> {
           try body = bit_string.slice(rest, 0, total_size - 4 - 1)
-          try body = decode_body(body, queue.new())
+          try body = decode_body(body, [])
           Ok(types.Document(body))
         }
         False -> Error(Nil)
@@ -42,13 +41,10 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
 
 fn decode_body(
   data: BitString,
-  storage: queue.Queue(#(String, types.Value)),
+  storage: List(#(String, types.Value)),
 ) -> Result(List(#(String, types.Value)), Nil) {
   case bit_string.byte_size(data) {
-    0 ->
-      storage
-      |> queue.to_list
-      |> Ok
+    0 -> Ok(storage)
 
     _ -> {
       let <<code:8, data:bit_string>> = data
@@ -249,7 +245,7 @@ fn consume_till_zero(
 }
 
 fn recurse_with_new_kv(rest, storage, key, value) {
-  decode_body(rest, queue.push_back(storage, #(key, value)))
+  decode_body(rest, list.key_set(storage, key, value))
 }
 
 fn decode_boolean(value, rest) {
