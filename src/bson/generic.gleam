@@ -29,7 +29,8 @@ pub fn from_string(data: String) -> Generic {
 }
 
 pub fn from_int_list(data: List(Int)) -> Generic {
-  list.fold(data, <<>>, fn(acc, code) { bit_string.append(acc, <<code>>) })
+  data
+  |> list.fold(<<>>, fn(acc, code) { bit_string.append(acc, <<code>>) })
   |> Generic
 }
 

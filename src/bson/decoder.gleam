@@ -30,7 +30,9 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
         True -> {
           try body = bit_string.slice(rest, 0, total_size - 4 - 1)
           try body = decode_body(body, [])
-          Ok(types.Document(body))
+          body
+          |> types.Document
+          |> Ok
         }
         False -> Error(Nil)
       }
@@ -67,7 +69,9 @@ fn decode_body(
                 rest,
                 storage,
                 key,
-                types.Binary(types.Generic(value)),
+                value
+                |> types.Generic
+                |> types.Binary,
               )
             }
             sub_kind if sub_kind == md5_kind -> {
@@ -76,7 +80,9 @@ fn decode_body(
                 rest,
                 storage,
                 key,
-                types.Binary(types.MD5(value)),
+                value
+                |> types.MD5
+                |> types.Binary,
               )
             }
             sub_kind if sub_kind == uuid_kind -> {
@@ -85,7 +91,9 @@ fn decode_body(
                 rest,
                 storage,
                 key,
-                types.Binary(types.UUID(value)),
+                value
+                |> types.UUID
+                |> types.Binary,
               )
             }
             _ if sub_code >= 0x80 -> {
@@ -94,7 +102,9 @@ fn decode_body(
                 rest,
                 storage,
                 key,
-                types.Binary(types.Custom(value)),
+                value
+                |> types.Custom
+                |> types.Binary,
               )
             }
             _ -> Error(Nil)
@@ -193,7 +203,10 @@ fn decode_body(
           try doc = bit_string.slice(rest, 0, doc_size)
           try types.Document(doc) = decode_document(doc)
           try doc = case kind {
-            kind if kind == document -> Ok(types.Document(doc))
+            kind if kind == document ->
+              doc
+              |> types.Document
+              |> Ok
             kind if kind == array -> {
               try doc =
                 list.try_map(
@@ -203,10 +216,10 @@ fn decode_body(
                     Ok(#(first, item.1))
                   },
                 )
-              types.Array(
-                list.sort(doc, fn(a, b) { int.compare(a.0, b.0) })
-                |> list.map(pair.second),
-              )
+              doc
+              |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
+              |> list.map(pair.second)
+              |> types.Array
               |> Ok
             }
             _ -> Error(Nil)

@@ -9,10 +9,6 @@ pub opaque type ObjectId {
   ObjectId(BitString)
 }
 
-type TimeUnit {
-  Second
-}
-
 pub fn new() -> ObjectId {
   let moment = now(Second)
   let counter = int.random(0, 0xffffff)
@@ -201,6 +197,10 @@ external fn get_hostname() -> Result(BitString, Nil) =
 
 external fn get_pid() -> List(Int) =
   "os" "getpid"
+
+type TimeUnit {
+  Second
+}
 
 external fn now(unit: TimeUnit) -> Int =
   "os" "system_time"
