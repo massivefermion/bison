@@ -1,5 +1,6 @@
 import gleam/int
 import gleam/list
+import gleam/order
 import gleam/queue
 import gleam/crypto
 import gleam/string
@@ -9,13 +10,11 @@ pub opaque type ObjectId {
   ObjectId(BitString)
 }
 
-type TimeUnit {
-  Second
-}
-
 pub fn new() -> ObjectId {
-  let moment = now(Second)
-  let counter = int.random(0, 0xffffff)
+  let moment_in_microseconds = now()
+
+  assert Ok(moment) = int.divide(moment_in_microseconds, 1_000_000)
+  assert Ok(counter) = int.modulo(moment_in_microseconds, 0xffffff)
 
   assert Ok(hostname) = get_hostname()
   let <<machine_id:size(24), _:bit_string>> =
@@ -38,6 +37,28 @@ pub fn new() -> ObjectId {
 pub fn get_timestamp(id: ObjectId) {
   case id {
     ObjectId(<<timestamp:big-32, _:bit_string>>) -> timestamp
+  }
+}
+
+pub fn compare(a: ObjectId, b: ObjectId) -> order.Order {
+  let ObjectId(<<moment_a:big-32, _:big-24, _:big-16, counter_a:big-24>>) = a
+  let ObjectId(<<moment_b:big-32, _:big-24, _:big-16, counter_b:big-24>>) = b
+
+  case moment_a == moment_b {
+    True ->
+      case counter_a == counter_b {
+        True -> order.Eq
+        False ->
+          case counter_a < counter_b {
+            True -> order.Lt
+            False -> order.Gt
+          }
+      }
+    False ->
+      case moment_a < moment_b {
+        True -> order.Lt
+        False -> order.Gt
+      }
   }
 }
 
@@ -141,6 +162,14 @@ pub fn from_bit_string(id: BitString) -> Result(ObjectId, Nil) {
   }
 }
 
+type Unit {
+  Microsecond
+}
+
+fn now() -> Int {
+  time_offset(Microsecond) + monotonic_time(Microsecond)
+}
+
 fn to_string_internal(remaining: BitString, storage: String) -> String {
   let <<high:4, low:4, remaining:binary>> = remaining
 
@@ -202,5 +231,8 @@ external fn get_hostname() -> Result(BitString, Nil) =
 external fn get_pid() -> List(Int) =
   "os" "getpid"
 
-external fn now(unit: TimeUnit) -> Int =
-  "os" "system_time"
+external fn time_offset(Unit) -> Int =
+  "erlang" "time_offset"
+
+external fn monotonic_time(Unit) -> Int =
+  "erlang" "monotonic_time"
