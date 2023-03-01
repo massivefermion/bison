@@ -1,5 +1,5 @@
 name = "gleam_bson"
-version = "0.20.0"
+version = "0.21.0"
 
 description = "A bson encoder and decoder written in gleam"
 licences = ["Apache-2.0"]
@@ -11,7 +11,7 @@ repository = {type = "github", user = "massivefermion", repo = "gleam_bson"}
 
 [dependencies]
 gleam_crypto = "~> 0.3"
-gleam_stdlib = "~> 0.25"
+gleam_stdlib = "~> 0.27"
 
 [dev-dependencies]
-gleeunit = "~> 0.8"
+gleeunit = "~> 0.10"

@@ -13,21 +13,21 @@ pub opaque type ObjectId {
 pub fn new() -> ObjectId {
   let moment_in_microseconds = now()
 
-  assert Ok(moment) = int.divide(moment_in_microseconds, 1_000_000)
-  assert Ok(counter) = int.modulo(moment_in_microseconds, 0xffffff)
+  let assert Ok(moment) = int.divide(moment_in_microseconds, 1_000_000)
+  let assert Ok(counter) = int.modulo(moment_in_microseconds, 0xffffff)
 
-  assert Ok(hostname) = get_hostname()
+  let assert Ok(hostname) = get_hostname()
   let <<machine_id:size(24), _:bit_string>> =
     crypto.hash(crypto.Sha256, hostname)
 
-  assert Ok(string_pid) =
+  let assert Ok(string_pid) =
     get_pid()
     |> list.fold(<<>>, fn(acc, c) { <<acc:bit_string, c>> })
     |> bit_string.to_string
 
-  assert Ok(pid) = int.parse(string_pid)
+  let assert Ok(pid) = int.parse(string_pid)
 
-  assert Ok(id) =
+  let assert Ok(id) =
     <<moment:big-32, machine_id:big-24, pid:big-16, counter:big-24>>
     |> from_bit_string
 
@@ -221,7 +221,7 @@ fn to_char(digit: Int) -> String {
     True -> digit + 48
     False -> digit + 87
   }
-  assert Ok(digit) = bit_string.to_string(<<ch>>)
+  let assert Ok(digit) = bit_string.to_string(<<ch>>)
   digit
 }
 

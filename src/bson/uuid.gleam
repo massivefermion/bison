@@ -164,6 +164,6 @@ fn to_char(digit: Int) -> String {
     True -> digit + 48
     False -> digit + 87
   }
-  assert Ok(digit) = bit_string.to_string(<<ch>>)
+  let assert Ok(digit) = bit_string.to_string(<<ch>>)
   digit
 }

@@ -21,7 +21,7 @@ pub const bson = <<
 >>
 
 pub fn get_doc() -> List(#(String, types.Value)) {
-  assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
+  let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
 
   [
     #("_id", types.ObjectId(id)),
