@@ -116,7 +116,8 @@ fn integer(value: Int) -> Entity {
 
 fn datetime(value: time.Time) -> Entity {
   let duration.Duration(value) = time.difference(value, time.unix_epoch)
-  Entity(kind: types.datetime, value: <<{ value / 1000 }:64-little>>)
+  let value = value / 1000
+  Entity(kind: types.datetime, value: <<value:64-little>>)
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {
