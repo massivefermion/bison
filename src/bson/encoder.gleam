@@ -1,12 +1,14 @@
-import bson/md5
 import gleam/int
-import bson/uuid
 import gleam/list
+import gleam/bit_string
+import bson/md5
+import bson/uuid
 import bson/types
 import bson/custom
 import bson/generic
 import bson/object_id
-import gleam/bit_string
+import birl/time
+import birl/duration
 
 type Entity {
   Entity(kind: types.Kind, value: BitString)
@@ -112,8 +114,9 @@ fn integer(value: Int) -> Entity {
   }
 }
 
-fn datetime(value: Int) -> Entity {
-  Entity(kind: types.datetime, value: <<value:64-little>>)
+fn datetime(value: time.Time) -> Entity {
+  let duration.Duration(value) = time.difference(value, time.unix_epoch)
+  Entity(kind: types.datetime, value: <<{ value / 1000 }:64-little>>)
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {

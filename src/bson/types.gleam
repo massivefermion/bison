@@ -3,6 +3,7 @@ import bson/uuid.{UUID}
 import bson/custom.{Custom}
 import bson/generic.{Generic}
 import bson/object_id.{ObjectId}
+import birl/time.{Time}
 
 pub type Value {
   Min
@@ -13,7 +14,7 @@ pub type Value {
   Integer(Int)
   Double(Float)
   Boolean(Bool)
-  DateTime(Int)
+  DateTime(Time)
   Binary(Binary)
   Timestamp(Int)
   Array(List(Value))
