@@ -1,6 +1,6 @@
 # gleam_bson
 
-bson encoder and decoder for in gleam
+bson encoder and decoder for gleam
 
 ## Quick start
 
