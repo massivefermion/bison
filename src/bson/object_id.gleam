@@ -2,16 +2,26 @@ import gleam/int
 import gleam/list
 import gleam/order
 import gleam/queue
-import gleam/crypto
+import gleam/option
 import gleam/string
+import gleam/iterator
 import gleam/bit_string
+import gleam/crypto
+import birl/time
+import birl/duration
 
 pub opaque type ObjectId {
   ObjectId(BitString)
 }
 
 pub fn new() -> ObjectId {
-  let moment_in_microseconds = now()
+  from_time(time.utc_now())
+}
+
+/// see [birl](https://hex.pm/packages/birl)!
+pub fn from_time(time: time.Time) -> ObjectId {
+  let assert duration.Duration(moment_in_microseconds) =
+    time.difference(time, time.unix_epoch)
 
   let assert Ok(moment) = int.divide(moment_in_microseconds, 1_000_000)
   let assert Ok(counter) = int.modulo(moment_in_microseconds, 0xffffff)
@@ -34,10 +44,24 @@ pub fn new() -> ObjectId {
   id
 }
 
-pub fn get_timestamp(id: ObjectId) {
+/// see [birl](https://hex.pm/packages/birl)!
+pub fn to_time(id: ObjectId) -> time.Time {
   case id {
-    ObjectId(<<timestamp:big-32, _:bit_string>>) -> timestamp
+    ObjectId(<<timestamp:big-32, _:bit_string>>) -> time.from_unix(timestamp)
   }
+}
+
+/// can be used to create a time range starting from time `a` with step `s`,
+/// which is of type `duration.Duration` from package [birl](https://hex.pm/packages/birl)
+///
+/// if `b` is `option.None` the range will be infinite
+pub fn range(
+  from a: ObjectId,
+  to b: option.Option(ObjectId),
+  step s: duration.Duration,
+) {
+  time.range(to_time(a), option.map(b, to_time), s)
+  |> iterator.map(from_time)
 }
 
 pub fn compare(a: ObjectId, b: ObjectId) -> order.Order {
@@ -162,14 +186,6 @@ pub fn from_bit_string(id: BitString) -> Result(ObjectId, Nil) {
   }
 }
 
-type Unit {
-  Microsecond
-}
-
-fn now() -> Int {
-  time_offset(Microsecond) + monotonic_time(Microsecond)
-}
-
 fn to_string_internal(remaining: BitString, storage: String) -> String {
   let <<high:4, low:4, remaining:binary>> = remaining
 
@@ -230,9 +246,3 @@ external fn get_hostname() -> Result(BitString, Nil) =
 
 external fn get_pid() -> List(Int) =
   "os" "getpid"
-
-external fn time_offset(Unit) -> Int =
-  "erlang" "time_offset"
-
-external fn monotonic_time(Unit) -> Int =
-  "erlang" "monotonic_time"

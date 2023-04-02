@@ -1,6 +1,7 @@
 import gleam/order
 import gleeunit/should
 import bson/object_id
+import birl/time
 
 const string_id = "633eb709917585842c7345c7"
 
@@ -37,8 +38,8 @@ pub fn new_id_test() {
 pub fn timestamp_test() {
   let assert Ok(generated_id) = object_id.from_string(string_id)
   generated_id
-  |> object_id.get_timestamp
-  |> should.equal(timestamp)
+  |> object_id.to_time
+  |> should.equal(time.from_unix(timestamp))
 }
 
 pub fn order_test() {

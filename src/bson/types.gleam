@@ -5,6 +5,7 @@ import bson/generic.{Generic}
 import bson/object_id.{ObjectId}
 import birl/time.{Time}
 
+/// if you're not familiar with type `Time`, see [birl](https://hex.pm/packages/birl)!
 pub type Value {
   Min
   Max
