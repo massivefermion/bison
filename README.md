@@ -29,15 +29,16 @@ gleam add gleam_bson
 ### Encoding
 
 ```gleam
-import bson/md5
 import gleam/list
+import gleam/result
+import bson/md5
 import bson/types
 import bson.{encode}
 import bson/object_id
 
 fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
-  try id = object_id.from_string(cat.id)
-  try checksum = md5.from_string(cat.checksum)
+  use id <- result.then(object_id.from_string(cat.id))
+  use checksum <- result.then(md5.from_string(cat.checksum))
 
   Ok(encode([
     #("id", types.ObjectId(id)),
@@ -59,14 +60,15 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
 ### Decoding
 
 ```gleam
-import bson/md5
 import gleam/list
+import gleam/result
+import bson/md5
 import bson/types
 import bson.{decode}
 import bson/object_id
 
 fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
-  try doc = decode(data)
+  use doc <- result.then(decode(data))
 
   let [
     #("id", types.ObjectId(id)),
