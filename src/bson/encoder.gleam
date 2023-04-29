@@ -114,7 +114,7 @@ fn integer(value: Int) -> Entity {
   }
 }
 
-fn datetime(value: time.Time) -> Entity {
+fn datetime(value: time.DateTime) -> Entity {
   let duration.Duration(value) = time.difference(value, time.unix_epoch)
   let value = value / 1000
   Entity(kind: types.datetime, value: <<value:64-little>>)

@@ -24,7 +24,7 @@ pub const bson = <<
 
 pub fn get_doc() -> List(#(String, types.Value)) {
   let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
-  let author_birthdate = time.set_date(time.unix_epoch, #(1920, 1, 2))
+  let author_birthdate = time.set_date(time.unix_epoch, time.Date(1920, 1, 2))
 
   [
     #("_id", types.ObjectId(id)),

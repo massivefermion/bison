@@ -3,9 +3,9 @@ import bson/uuid.{UUID}
 import bson/custom.{Custom}
 import bson/generic.{Generic}
 import bson/object_id.{ObjectId}
-import birl/time.{Time}
+import birl/time.{DateTime}
 
-/// if you're not familiar with type `Time`, see [birl](https://hex.pm/packages/birl)!
+/// if you're not familiar with type `DateTime`, see [birl](https://hex.pm/packages/birl)!
 pub type Value {
   Min
   Max
@@ -15,11 +15,11 @@ pub type Value {
   Integer(Int)
   Double(Float)
   Boolean(Bool)
-  DateTime(Time)
   Binary(Binary)
   Timestamp(Int)
   Array(List(Value))
   ObjectId(ObjectId)
+  DateTime(DateTime)
   Regex(#(String, String))
   Document(List(#(String, Value)))
 }

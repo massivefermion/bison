@@ -38,7 +38,7 @@ pub fn new_id_test() {
 pub fn timestamp_test() {
   let assert Ok(generated_id) = object_id.from_string(string_id)
   generated_id
-  |> object_id.to_time
+  |> object_id.to_datetime
   |> should.equal(time.from_unix(timestamp))
 }
 

@@ -15,16 +15,13 @@ pub opaque type ObjectId {
 }
 
 pub fn new() -> ObjectId {
-  from_time(time.utc_now())
+  from_datetime(time.utc_now())
 }
 
 /// see [birl](https://hex.pm/packages/birl)!
-pub fn from_time(time: time.Time) -> ObjectId {
-  let assert duration.Duration(moment_in_microseconds) =
-    time.difference(time, time.unix_epoch)
-
-  let assert Ok(moment) = int.divide(moment_in_microseconds, 1_000_000)
-  let assert Ok(counter) = int.modulo(moment_in_microseconds, 0xffffff)
+pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
+  let moment = time.to_unix(datetime)
+  let assert Ok(counter) = int.modulo(time.monotonic_now(), 0xffffff)
 
   let assert Ok(hostname) = get_hostname()
   let <<machine_id:size(24), _:bit_string>> =
@@ -45,7 +42,7 @@ pub fn from_time(time: time.Time) -> ObjectId {
 }
 
 /// see [birl](https://hex.pm/packages/birl)!
-pub fn to_time(id: ObjectId) -> time.Time {
+pub fn to_datetime(id: ObjectId) -> time.DateTime {
   case id {
     ObjectId(<<timestamp:big-32, _:bit_string>>) -> time.from_unix(timestamp)
   }
@@ -60,8 +57,8 @@ pub fn range(
   to b: option.Option(ObjectId),
   step s: duration.Duration,
 ) {
-  time.range(to_time(a), option.map(b, to_time), s)
-  |> iterator.map(from_time)
+  time.range(to_datetime(a), option.map(b, to_datetime), s)
+  |> iterator.map(from_datetime)
 }
 
 pub fn compare(a: ObjectId, b: ObjectId) -> order.Order {
