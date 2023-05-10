@@ -1,6 +1,6 @@
 name = "gleam_bson"
 target = "erlang"
-version = "0.24.0"
+version = "0.25.0"
 
 description = "bson encoder and decoder for gleam"
 licences = ["Apache-2.0"]
@@ -10,8 +10,12 @@ links = [
 ]
 repository = {type = "github", user = "massivefermion", repo = "gleam_bson"}
 
+internal_modules = [
+  "bson/kind",
+]
+
 [dependencies]
-birl = "~> 0.9"
+birl = "~> 0.12"
 gleam_crypto = "~> 0.3"
 gleam_stdlib = "~> 0.28"
 

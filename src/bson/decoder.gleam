@@ -6,10 +6,11 @@ import gleam/result
 import gleam/bit_string
 import bson/md5
 import bson/uuid
+import bson/value
 import bson/custom
 import bson/generic
 import bson/object_id
-import bson/types.{
+import bson/kind.{
   array, binary, boolean, datetime, document, double, generic as generic_kind,
   int32, int64, js, max, md5 as md5_kind, min, null, object_id as object_id_kind,
   regex, string, timestamp, uuid as uuid_kind,
@@ -17,14 +18,14 @@ import bson/types.{
 import birl/time
 import birl/duration
 
-pub fn decode(data: BitString) -> Result(List(#(String, types.Value)), Nil) {
+pub fn decode(data: BitString) -> Result(List(#(String, value.Value)), Nil) {
   case decode_document(data) {
-    Ok(types.Document(doc)) -> Ok(doc)
+    Ok(value.Document(doc)) -> Ok(doc)
     _ -> Error(Nil)
   }
 }
 
-fn decode_document(data: BitString) -> Result(types.Value, Nil) {
+fn decode_document(data: BitString) -> Result(value.Value, Nil) {
   let total_size = bit_string.byte_size(data)
   let last_byte = bit_string.slice(data, total_size, -1)
   case last_byte {
@@ -35,7 +36,7 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
           use body <- result.then(bit_string.slice(rest, 0, total_size - 4 - 1))
           use body <- result.then(decode_body(body, []))
           body
-          |> types.Document
+          |> value.Document
           |> Ok
         }
         False -> Error(Nil)
@@ -47,8 +48,8 @@ fn decode_document(data: BitString) -> Result(types.Value, Nil) {
 
 fn decode_body(
   data: BitString,
-  storage: List(#(String, types.Value)),
-) -> Result(List(#(String, types.Value)), Nil) {
+  storage: List(#(String, value.Value)),
+) -> Result(List(#(String, value.Value)), Nil) {
   use <- bool.guard(bit_string.byte_size(data) == 0, Ok(storage))
 
   let <<code:8, data:bit_string>> = data
@@ -62,42 +63,42 @@ fn decode_body(
     total_size - key_size - 1,
   ))
 
-  let kind = types.Kind(code: <<code>>)
+  let kind = kind.Kind(code: <<code>>)
   case kind {
-    kind if kind == min -> recurse_with_new_kv(rest, storage, key, types.Min)
-    kind if kind == max -> recurse_with_new_kv(rest, storage, key, types.Max)
-    kind if kind == null -> recurse_with_new_kv(rest, storage, key, types.Null)
+    kind if kind == min -> recurse_with_new_kv(rest, storage, key, value.Min)
+    kind if kind == max -> recurse_with_new_kv(rest, storage, key, value.Max)
+    kind if kind == null -> recurse_with_new_kv(rest, storage, key, value.Null)
 
     kind if kind == int32 -> {
       let <<value:32-little-signed, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, types.Integer(value))
+      recurse_with_new_kv(rest, storage, key, value.Integer(value))
     }
 
     kind if kind == int64 -> {
       let <<value:64-little-signed, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, types.Integer(value))
+      recurse_with_new_kv(rest, storage, key, value.Integer(value))
     }
 
     kind if kind == double -> {
       let <<value:little-float, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, types.Double(value))
+      recurse_with_new_kv(rest, storage, key, value.Double(value))
     }
 
     kind if kind == timestamp -> {
       let <<value:64-little-unsigned, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, types.Timestamp(value))
+      recurse_with_new_kv(rest, storage, key, value.Timestamp(value))
     }
 
     kind if kind == object_id_kind -> {
       let <<value:96-bit_string, rest:bit_string>> = rest
       use oid <- result.then(object_id.from_bit_string(value))
-      recurse_with_new_kv(rest, storage, key, types.ObjectId(oid))
+      recurse_with_new_kv(rest, storage, key, value.ObjectId(oid))
     }
 
     kind if kind == boolean -> {
       let <<value:8, rest:bit_string>> = rest
       use value <- decode_boolean(value)
-      recurse_with_new_kv(rest, storage, key, types.Boolean(value))
+      recurse_with_new_kv(rest, storage, key, value.Boolean(value))
     }
 
     kind if kind == datetime -> {
@@ -107,7 +108,7 @@ fn decode_body(
           time.unix_epoch,
           duration.accurate_new([#(value, duration.MilliSecond)]),
         )
-      recurse_with_new_kv(rest, storage, key, types.DateTime(value))
+      recurse_with_new_kv(rest, storage, key, value.DateTime(value))
     }
 
     kind if kind == regex -> {
@@ -119,7 +120,7 @@ fn decode_body(
       let <<_:size(options_size), rest:bit_string>> = rest
       use pattern <- result.then(bit_string.to_string(pattern_bytes))
       use options <- result.then(bit_string.to_string(options_bytes))
-      recurse_with_new_kv(rest, storage, key, types.Regex(#(pattern, options)))
+      recurse_with_new_kv(rest, storage, key, value.Regex(#(pattern, options)))
     }
 
     kind if kind == string -> {
@@ -134,7 +135,7 @@ fn decode_body(
             str_size + 1,
             bit_string.byte_size(rest) - str_size - 1,
           ))
-          recurse_with_new_kv(rest, storage, key, types.Str(str))
+          recurse_with_new_kv(rest, storage, key, value.Str(str))
         }
         False -> Error(Nil)
       }
@@ -152,7 +153,7 @@ fn decode_body(
             str_size + 1,
             bit_string.byte_size(rest) - str_size - 1,
           ))
-          recurse_with_new_kv(rest, storage, key, types.JS(str))
+          recurse_with_new_kv(rest, storage, key, value.JS(str))
         }
         False -> Error(Nil)
       }
@@ -162,11 +163,11 @@ fn decode_body(
       let <<doc_size:32-little-int, _:bit_string>> = rest
       use doc <- result.then(bit_string.slice(rest, 0, doc_size))
       use doc <- result.then(decode_document(doc))
-      let assert types.Document(doc) = doc
+      let assert value.Document(doc) = doc
       use doc <- result.then(case kind {
         kind if kind == document ->
           doc
-          |> types.Document
+          |> value.Document
           |> Ok
 
         kind if kind == array -> {
@@ -180,7 +181,7 @@ fn decode_body(
           doc
           |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
           |> list.map(pair.second)
-          |> types.Array
+          |> value.Array
           |> Ok
         }
 
@@ -198,7 +199,7 @@ fn decode_body(
       let <<byte_size:32-little-int, sub_code:8, rest:bit_string>> = rest
       let given_size = byte_size * 8
       let <<value:size(given_size)-bit_string, rest:bit_string>> = rest
-      let sub_kind = types.SubKind(code: <<sub_code>>)
+      let sub_kind = kind.SubKind(code: <<sub_code>>)
       case sub_kind {
         sub_kind if sub_kind == generic_kind -> {
           use value <- result.then(generic.from_bit_string(value))
@@ -208,8 +209,8 @@ fn decode_body(
             storage,
             key,
             value
-            |> types.Generic
-            |> types.Binary,
+            |> value.Generic
+            |> value.Binary,
           )
         }
 
@@ -221,8 +222,8 @@ fn decode_body(
             storage,
             key,
             value
-            |> types.MD5
-            |> types.Binary,
+            |> value.MD5
+            |> value.Binary,
           )
         }
 
@@ -234,8 +235,8 @@ fn decode_body(
             storage,
             key,
             value
-            |> types.UUID
-            |> types.Binary,
+            |> value.UUID
+            |> value.Binary,
           )
         }
 
@@ -250,8 +251,8 @@ fn decode_body(
             storage,
             key,
             value
-            |> types.Custom
-            |> types.Binary,
+            |> value.Custom
+            |> value.Binary,
           )
         }
 

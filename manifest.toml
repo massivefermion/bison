@@ -2,16 +2,16 @@
 # You typically do not need to edit this file
 
 packages = [
-  { name = "birl", version = "0.9.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "ranger"], otp_app = "birl", source = "hex", outer_checksum = "5E83A0E9C6C0F824C0E7000D7F074C5A28079690DB06B10AA1307A0812F09A41" },
+  { name = "birl", version = "0.12.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "ranger"], otp_app = "birl", source = "hex", outer_checksum = "E03382B27CF89AF83AE4585C15D1479C80E1869BE518D54EF95959F7232084D7" },
   { name = "gleam_bitwise", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_bitwise", source = "hex", outer_checksum = "6064699EFBABB1CA392DCB193D0E8B402FB042B4B46857B01E6875E643B57F54" },
-  { name = "gleam_crypto", version = "0.3.1", build_tools = ["gleam"], requirements = ["gleam_bitwise", "gleam_stdlib"], otp_app = "gleam_crypto", source = "hex", outer_checksum = "C356D26C3EDFF495F2C73378C4D9C47435F729F5852ECA8CD6F635515317E630" },
-  { name = "gleam_stdlib", version = "0.28.1", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "73F0A89FADE5022CBEF6D6C3551F9ADCE7054AFCE0CB1DC4C6D5AB4CA62D0111" },
+  { name = "gleam_crypto", version = "0.3.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gleam_bitwise"], otp_app = "gleam_crypto", source = "hex", outer_checksum = "C356D26C3EDFF495F2C73378C4D9C47435F729F5852ECA8CD6F635515317E630" },
+  { name = "gleam_stdlib", version = "0.28.2", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "088E334A00C9530D4B194F31406E51B6E4E4697C6A380D11591E60CC2F239724" },
   { name = "gleeunit", version = "0.10.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "ECEA2DE4BE6528D36AFE74F42A21CDF99966EC36D7F25DEB34D47DD0F7977BAF" },
   { name = "ranger", version = "0.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "ranger", source = "hex", outer_checksum = "70FF9A5BACD1E6D53C1D7DED93C103671E1C82B033AE254526E907CBC59C848B" },
 ]
 
 [requirements]
-birl = "~> 0.9"
+birl = "~> 0.12"
 gleam_crypto = "~> 0.3"
 gleam_stdlib = "~> 0.28"
 gleeunit = "~> 0.10"

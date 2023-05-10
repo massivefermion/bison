@@ -1,4 +1,4 @@
-import bson/types
+import bson/value
 import bson/object_id
 import birl/time
 
@@ -22,38 +22,38 @@ pub const bson = <<
   51, 45, 50, 57, 51, 51, 53, 45, 52, 0, 0, 0,
 >>
 
-pub fn get_doc() -> List(#(String, types.Value)) {
+pub fn get_doc() -> List(#(String, value.Value)) {
   let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
   let author_birthdate = time.set_date(time.unix_epoch, time.Date(1920, 1, 2))
 
   [
-    #("_id", types.ObjectId(id)),
-    #("metadata", types.Str("gleam_bson_test")),
+    #("_id", value.ObjectId(id)),
+    #("metadata", value.Str("gleam_bson_test")),
     #(
       "data",
-      types.Document([
-        #("title", types.Str("Foundation")),
-        #("published", types.Integer(1951)),
-        #("pages", types.Integer(255)),
+      value.Document([
+        #("title", value.Str("Foundation")),
+        #("published", value.Integer(1951)),
+        #("pages", value.Integer(255)),
         #(
           "genre",
-          types.Array([
-            types.Str("science fiction"),
-            types.Str("political thriller"),
+          value.Array([
+            value.Str("science fiction"),
+            value.Str("political thriller"),
           ]),
         ),
         #(
           "author",
-          types.Document([
-            #("name", types.Str("Isaac Asimov")),
-            #("birthdate", types.DateTime(author_birthdate)),
-            #("alive?", types.Boolean(False)),
-            #("active", types.Array([types.Integer(1939), types.Integer(1992)])),
-            #("height", types.Double(1.75)),
-            #("religion", types.Null),
+          value.Document([
+            #("name", value.Str("Isaac Asimov")),
+            #("birthdate", value.DateTime(author_birthdate)),
+            #("alive?", value.Boolean(False)),
+            #("active", value.Array([value.Integer(1939), value.Integer(1992)])),
+            #("height", value.Double(1.75)),
+            #("religion", value.Null),
           ]),
         ),
-        #("ISBN", types.Str("0-553-29335-4")),
+        #("ISBN", value.Str("0-553-29335-4")),
       ]),
     ),
   ]

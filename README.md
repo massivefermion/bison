@@ -32,7 +32,7 @@ gleam add gleam_bson
 import gleam/list
 import gleam/result
 import bson/md5
-import bson/types
+import bson/value
 import bson.{encode}
 import bson/object_id
 
@@ -41,18 +41,12 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
   use checksum <- result.then(md5.from_string(cat.checksum))
 
   Ok(encode([
-    #("id", types.ObjectId(id)),
-    #("name", types.Str(cat.name)),
-    #("lives", types.Integer(cat.lives)),
-    #(
-      "nicknames",
-      types.Array(
-        cat.nicknames
-        |> list.map(types.Str),
-      ),
-    ),
+    #("id", value.ObjectId(id)),
+    #("name", value.Str(cat.name)),
+    #("lives", value.Integer(cat.lives)),
+    #("nicknames", value.Array(list.map(cat.nicknames, types.Str))),
     #("checksum", types.Binary(types.MD5(checksum))),
-    #("name_pattern", types.Regex(#("[a-z][a-z0-9]+", "")))
+    #("name_pattern", types.Regex(#("[a-z][a-z0-9]+", ""))),
   ]))
 }
 ```
@@ -63,7 +57,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
 import gleam/list
 import gleam/result
 import bson/md5
-import bson/types
+import bson/value
 import bson.{decode}
 import bson/object_id
 
@@ -76,21 +70,21 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
     #("lives", types.Integer(lives)),
     #("nicknames", types.Array(nicknames)),
     #("checksum", types.Binary(types.MD5(checksum))),
-    #("name_pattern", types.Regex(#(pattern, options)))
+    #("name_pattern", types.Regex(#(pattern, options))),
   ] = doc
 
   Ok(Cat(
-    id: id
-    |> object_id.to_string,
+    id: object_id.to_string(id),
     name: name,
     lives: lives,
-    nicknames: nicknames
-    |> list.map(fn(n) {
-      assert types.Str(n) = n
-      n
-    }),
-    checksum: checksum
-    |> md5.to_string,
+    nicknames: list.map(
+      nicknames,
+      fn(n) {
+        let assert types.Str(n) = n
+        n
+      },
+    ),
+    checksum: md5.to_string(checksum),
   ))
 }
 ```
