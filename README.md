@@ -44,9 +44,9 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
     #("id", value.ObjectId(id)),
     #("name", value.Str(cat.name)),
     #("lives", value.Integer(cat.lives)),
-    #("nicknames", value.Array(list.map(cat.nicknames, types.Str))),
-    #("checksum", types.Binary(types.MD5(checksum))),
-    #("name_pattern", types.Regex(#("[a-z][a-z0-9]+", ""))),
+    #("nicknames", value.Array(list.map(cat.nicknames, value.Str))),
+    #("checksum", value.Binary(value.MD5(checksum))),
+    #("name_pattern", value.Regex(#("[a-z][a-z0-9]+", ""))),
   ]))
 }
 ```
@@ -65,12 +65,12 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
   use doc <- result.then(decode(data))
 
   let [
-    #("id", types.ObjectId(id)),
-    #("name", types.Str(name)),
-    #("lives", types.Integer(lives)),
-    #("nicknames", types.Array(nicknames)),
-    #("checksum", types.Binary(types.MD5(checksum))),
-    #("name_pattern", types.Regex(#(pattern, options))),
+    #("id", value.ObjectId(id)),
+    #("name", value.Str(name)),
+    #("lives", value.Integer(lives)),
+    #("nicknames", value.Array(nicknames)),
+    #("checksum", value.Binary(value.MD5(checksum))),
+    #("name_pattern", value.Regex(#(pattern, options))),
   ] = doc
 
   Ok(Cat(
@@ -80,7 +80,7 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
     nicknames: list.map(
       nicknames,
       fn(n) {
-        let assert types.Str(n) = n
+        let assert value.Str(n) = n
         n
       },
     ),
