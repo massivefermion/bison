@@ -238,8 +238,8 @@ fn to_char(digit: Int) -> String {
   digit
 }
 
-external fn get_hostname() -> Result(BitString, Nil) =
-  "inet" "gethostname"
+@external(erlang, "inet", "gethostname")
+fn get_hostname() -> Result(BitString, Nil)
 
-external fn get_pid() -> List(Int) =
-  "os" "getpid"
+@external(erlang, "os", "getpid")
+fn get_pid() -> List(Int)

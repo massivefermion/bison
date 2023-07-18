@@ -55,5 +55,5 @@ fn to_int_list_internal(
   }
 }
 
-external fn bit_size(BitString) -> Int =
-  "erlang" "bit_size"
+@external(erlang, "erlang", "bit_size")
+fn bit_size(a: BitString) -> Int
