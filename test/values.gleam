@@ -33,8 +33,8 @@ pub fn get_doc() -> List(#(String, value.Value)) {
       "data",
       value.Document([
         #("title", value.Str("Foundation")),
-        #("published", value.Integer(1951)),
-        #("pages", value.Integer(255)),
+        #("published", value.Int32(1951)),
+        #("pages", value.Int32(255)),
         #(
           "genre",
           value.Array([
@@ -48,7 +48,7 @@ pub fn get_doc() -> List(#(String, value.Value)) {
             #("name", value.Str("Isaac Asimov")),
             #("birthdate", value.DateTime(author_birthdate)),
             #("alive?", value.Boolean(False)),
-            #("active", value.Array([value.Integer(1939), value.Integer(1992)])),
+            #("active", value.Array([value.Int32(1939), value.Int32(1992)])),
             #("height", value.Double(1.75)),
             #("religion", value.Null),
           ]),

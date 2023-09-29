@@ -12,7 +12,8 @@ pub type Value {
   Null
   JS(String)
   Str(String)
-  Integer(Int)
+  Int32(Int)
+  Int64(Int)
   Double(Float)
   Boolean(Bool)
   Binary(Binary)

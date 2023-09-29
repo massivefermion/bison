@@ -43,7 +43,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
   Ok(encode([
     #("id", value.ObjectId(id)),
     #("name", value.Str(cat.name)),
-    #("lives", value.Integer(cat.lives)),
+    #("lives", value.Int32(cat.lives)),
     #("nicknames", value.Array(list.map(cat.nicknames, value.Str))),
     #("checksum", value.Binary(value.MD5(checksum))),
     #("name_pattern", value.Regex(#("[a-z][a-z0-9]+", ""))),
@@ -67,7 +67,7 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
   let [
     #("id", value.ObjectId(id)),
     #("name", value.Str(name)),
-    #("lives", value.Integer(lives)),
+    #("lives", value.Int32(lives)),
     #("nicknames", value.Array(nicknames)),
     #("checksum", value.Binary(value.MD5(checksum))),
     #("name_pattern", value.Regex(#(pattern, options))),

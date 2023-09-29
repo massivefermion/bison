@@ -71,12 +71,12 @@ fn decode_body(
 
     kind if kind == int32 -> {
       let <<value:32-little-signed, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, value.Integer(value))
+      recurse_with_new_kv(rest, storage, key, value.Int32(value))
     }
 
     kind if kind == int64 -> {
       let <<value:64-little-signed, rest:bit_string>> = rest
-      recurse_with_new_kv(rest, storage, key, value.Integer(value))
+      recurse_with_new_kv(rest, storage, key, value.Int64(value))
     }
 
     kind if kind == double -> {

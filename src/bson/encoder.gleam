@@ -45,9 +45,10 @@ fn encode_kv(pair: #(String, value.Value)) -> BitString {
     value.JS(value) -> js(value)
     value.Str(value) -> string(value)
     value.Array(value) -> array(value)
+    value.Int32(value) -> int32(value)
+    value.Int64(value) -> int64(value)
     value.Double(value) -> double(value)
     value.Boolean(value) -> boolean(value)
-    value.Integer(value) -> integer(value)
     value.Document(value) -> document(value)
     value.DateTime(value) -> datetime(value)
     value.ObjectId(value) -> object_id(value)
@@ -108,11 +109,12 @@ fn boolean(value: Bool) -> Entity {
   }
 }
 
-fn integer(value: Int) -> Entity {
-  case value < kind.int32_max && value > kind.int32_min {
-    True -> Entity(kind: kind.int32, value: <<value:32-little>>)
-    False -> Entity(kind: kind.int64, value: <<value:64-little>>)
-  }
+fn int32(value: Int) -> Entity {
+  Entity(kind: kind.int32, value: <<value:32-little>>)
+}
+
+fn int64(value: Int) -> Entity {
+  Entity(kind: kind.int64, value: <<value:64-little>>)
 }
 
 fn datetime(value: time.DateTime) -> Entity {
