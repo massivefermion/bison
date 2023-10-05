@@ -1,5 +1,5 @@
-import bson/encoder
-import bson/decoder
+import bison/encoder
+import bison/decoder
 
 pub fn encode(doc) {
   encoder.encode(doc)

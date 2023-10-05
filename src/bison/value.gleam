@@ -1,8 +1,8 @@
-import bson/md5.{MD5}
-import bson/uuid.{UUID}
-import bson/custom.{Custom}
-import bson/generic.{Generic}
-import bson/object_id.{ObjectId}
+import bison/md5.{MD5}
+import bison/uuid.{UUID}
+import bison/custom.{Custom}
+import bison/generic.{Generic}
+import bison/object_id.{ObjectId}
 import birl/time.{DateTime}
 
 /// if you're not familiar with type `DateTime`, see [birl](https://hex.pm/packages/birl)!

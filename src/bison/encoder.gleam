@@ -1,13 +1,13 @@
 import gleam/int
 import gleam/list
 import gleam/bit_string
-import bson/md5
-import bson/uuid
-import bson/kind
-import bson/value
-import bson/custom
-import bson/generic
-import bson/object_id
+import bison/md5
+import bison/uuid
+import bison/kind
+import bison/value
+import bison/custom
+import bison/generic
+import bison/object_id
 import birl/time
 import birl/duration
 

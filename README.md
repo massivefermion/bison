@@ -1,4 +1,4 @@
-# gleam_bson
+# bison (formerly gleam_bson)
 
 bson encoder and decoder for gleam
 
@@ -12,7 +12,7 @@ gleam shell # Run an Erlang shell
 ## Installation
 
 ```sh
-gleam add gleam_bson
+gleam add bison
 ```
 
 ## Roadmap
@@ -31,10 +31,10 @@ gleam add gleam_bson
 ```gleam
 import gleam/list
 import gleam/result
-import bson/md5
-import bson/value
-import bson.{encode}
-import bson/object_id
+import bison/md5
+import bison/value
+import bison.{encode}
+import bison/object_id
 
 fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
   use id <- result.then(object_id.from_string(cat.id))
@@ -56,10 +56,10 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
 ```gleam
 import gleam/list
 import gleam/result
-import bson/md5
-import bson/value
-import bson.{decode}
-import bson/object_id
+import bison/md5
+import bison/value
+import bison.{decode}
+import bison/object_id
 
 fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
   use doc <- result.then(decode(data))

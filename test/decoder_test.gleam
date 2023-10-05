@@ -1,6 +1,6 @@
 import gleeunit/should
 import values
-import bson.{decode}
+import bison.{decode}
 
 pub fn decoder_test() {
   let doc = values.get_doc()

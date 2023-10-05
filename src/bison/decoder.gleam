@@ -4,13 +4,13 @@ import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/bit_string
-import bson/md5
-import bson/uuid
-import bson/value
-import bson/custom
-import bson/generic
-import bson/object_id
-import bson/kind.{
+import bison/md5
+import bison/uuid
+import bison/value
+import bison/custom
+import bison/generic
+import bison/object_id
+import bison/kind.{
   array, binary, boolean, datetime, document, double, generic as generic_kind,
   int32, int64, js, max, md5 as md5_kind, min, null, object_id as object_id_kind,
   regex, string, timestamp, uuid as uuid_kind,

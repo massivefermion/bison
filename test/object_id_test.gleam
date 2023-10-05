@@ -1,6 +1,6 @@
 import gleam/order
 import gleeunit/should
-import bson/object_id
+import bison/object_id
 import birl/time
 
 const string_id = "633eb709917585842c7345c7"
