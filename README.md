@@ -32,7 +32,7 @@ gleam add bison
 import gleam/list
 import gleam/result
 import bison/md5
-import bison/value
+import bison/bson
 import bison.{encode}
 import bison/object_id
 
@@ -41,12 +41,12 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
   use checksum <- result.then(md5.from_string(cat.checksum))
 
   Ok(encode([
-    #("id", value.ObjectId(id)),
-    #("name", value.Str(cat.name)),
-    #("lives", value.Int32(cat.lives)),
-    #("nicknames", value.Array(list.map(cat.nicknames, value.Str))),
-    #("checksum", value.Binary(value.MD5(checksum))),
-    #("name_pattern", value.Regex(#("[a-z][a-z0-9]+", ""))),
+    #("id", bson.ObjectId(id)),
+    #("name", bson.Str(cat.name)),
+    #("lives", bson.Int32(cat.lives)),
+    #("nicknames", bson.Array(list.map(cat.nicknames, bson.Str))),
+    #("checksum", bson.Binary(bson.MD5(checksum))),
+    #("name_pattern", bson.Regex(#("[a-z][a-z0-9]+", ""))),
   ]))
 }
 ```
@@ -57,7 +57,7 @@ fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
 import gleam/list
 import gleam/result
 import bison/md5
-import bison/value
+import bison/bson
 import bison.{decode}
 import bison/object_id
 
@@ -65,12 +65,12 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
   use doc <- result.then(decode(data))
 
   let [
-    #("id", value.ObjectId(id)),
-    #("name", value.Str(name)),
-    #("lives", value.Int32(lives)),
-    #("nicknames", value.Array(nicknames)),
-    #("checksum", value.Binary(value.MD5(checksum))),
-    #("name_pattern", value.Regex(#(pattern, options))),
+    #("id", bson.ObjectId(id)),
+    #("name", bson.Str(name)),
+    #("lives", bson.Int32(lives)),
+    #("nicknames", bson.Array(nicknames)),
+    #("checksum", bson.Binary(bson.MD5(checksum))),
+    #("name_pattern", bson.Regex(#(pattern, options))),
   ] = doc
 
   Ok(Cat(
@@ -80,7 +80,7 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
     nicknames: list.map(
       nicknames,
       fn(n) {
-        let assert value.Str(n) = n
+        let assert bson.Str(n) = n
         n
       },
     ),

@@ -4,7 +4,7 @@ import gleam/bit_string
 import bison/md5
 import bison/uuid
 import bison/kind
-import bison/value
+import bison/bson
 import bison/custom
 import bison/generic
 import bison/object_id
@@ -15,13 +15,13 @@ type Entity {
   Entity(kind: kind.Kind, value: BitString)
 }
 
-pub fn encode(doc: List(#(String, value.Value))) -> BitString {
+pub fn encode(doc: List(#(String, bson.Value))) -> BitString {
   case document(doc) {
     Entity(kind: _, value: value) -> value
   }
 }
 
-fn document(doc: List(#(String, value.Value))) -> Entity {
+fn document(doc: List(#(String, bson.Value))) -> Entity {
   let doc =
     doc
     |> list.map(encode_kv)
@@ -35,29 +35,29 @@ fn document(doc: List(#(String, value.Value))) -> Entity {
   )
 }
 
-fn encode_kv(pair: #(String, value.Value)) -> BitString {
+fn encode_kv(pair: #(String, bson.Value)) -> BitString {
   let key = <<pair.0:utf8, 0>>
 
   let value = case pair.1 {
-    value.Null -> null()
-    value.Min -> min()
-    value.Max -> max()
-    value.JS(value) -> js(value)
-    value.Str(value) -> string(value)
-    value.Array(value) -> array(value)
-    value.Int32(value) -> int32(value)
-    value.Int64(value) -> int64(value)
-    value.Double(value) -> double(value)
-    value.Boolean(value) -> boolean(value)
-    value.Document(value) -> document(value)
-    value.DateTime(value) -> datetime(value)
-    value.ObjectId(value) -> object_id(value)
-    value.Timestamp(value) -> timestamp(value)
-    value.Binary(value.MD5(value)) -> md5(value)
-    value.Binary(value.UUID(value)) -> uuid(value)
-    value.Binary(value.Custom(value)) -> custom(value)
-    value.Binary(value.Generic(value)) -> generic(value)
-    value.Regex(#(pattern, options)) -> regex(pattern, options)
+    bson.Null -> null()
+    bson.Min -> min()
+    bson.Max -> max()
+    bson.JS(value) -> js(value)
+    bson.Str(value) -> string(value)
+    bson.Array(value) -> array(value)
+    bson.Int32(value) -> int32(value)
+    bson.Int64(value) -> int64(value)
+    bson.Double(value) -> double(value)
+    bson.Boolean(value) -> boolean(value)
+    bson.Document(value) -> document(value)
+    bson.DateTime(value) -> datetime(value)
+    bson.ObjectId(value) -> object_id(value)
+    bson.Timestamp(value) -> timestamp(value)
+    bson.Binary(bson.MD5(value)) -> md5(value)
+    bson.Binary(bson.UUID(value)) -> uuid(value)
+    bson.Binary(bson.Custom(value)) -> custom(value)
+    bson.Binary(bson.Generic(value)) -> generic(value)
+    bson.Regex(#(pattern, options)) -> regex(pattern, options)
   }
 
   case value {
@@ -89,7 +89,7 @@ fn string(value: String) -> Entity {
   Entity(kind: kind.string, value: <<length:32-little, value:utf8, 0>>)
 }
 
-fn array(value: List(value.Value)) -> Entity {
+fn array(value: List(bson.Value)) -> Entity {
   case
     list.index_map(value, fn(index, item) { #(int.to_string(index), item) })
     |> document

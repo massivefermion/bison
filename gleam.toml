@@ -1,6 +1,6 @@
 name = "bison"
 target = "erlang"
-version = "0.27.0"
+version = "0.28.0"
 
 description = "bson encoder and decoder for gleam (formerly gleam_bson)"
 licences = ["Apache-2.0"]
@@ -12,6 +12,8 @@ repository = {type = "github", user = "massivefermion", repo = "bison"}
 
 internal_modules = [
   "bison/kind",
+  "bison/encoder",
+  "bison/decoder",
 ]
 
 [dependencies]

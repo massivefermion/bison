@@ -1,4 +1,4 @@
-import bison/value
+import bison/bson
 import bison/object_id
 import birl/time
 
@@ -22,38 +22,38 @@ pub const bson = <<
   0, 0, 0,
 >>
 
-pub fn get_doc() -> List(#(String, value.Value)) {
+pub fn get_doc() -> List(#(String, bson.Value)) {
   let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
   let author_birthdate = time.set_date(time.unix_epoch, time.Date(1920, 1, 2))
 
   [
-    #("_id", value.ObjectId(id)),
-    #("metadata", value.Str("bison_test")),
+    #("_id", bson.ObjectId(id)),
+    #("metadata", bson.Str("bison_test")),
     #(
       "data",
-      value.Document([
-        #("title", value.Str("Foundation")),
-        #("published", value.Int32(1951)),
-        #("pages", value.Int32(255)),
+      bson.Document([
+        #("title", bson.Str("Foundation")),
+        #("published", bson.Int32(1951)),
+        #("pages", bson.Int32(255)),
         #(
           "genre",
-          value.Array([
-            value.Str("science fiction"),
-            value.Str("political thriller"),
+          bson.Array([
+            bson.Str("science fiction"),
+            bson.Str("political thriller"),
           ]),
         ),
         #(
           "author",
-          value.Document([
-            #("name", value.Str("Isaac Asimov")),
-            #("birthdate", value.DateTime(author_birthdate)),
-            #("alive?", value.Boolean(False)),
-            #("active", value.Array([value.Int32(1939), value.Int32(1992)])),
-            #("height", value.Double(1.75)),
-            #("religion", value.Null),
+          bson.Document([
+            #("name", bson.Str("Isaac Asimov")),
+            #("birthdate", bson.DateTime(author_birthdate)),
+            #("alive?", bson.Boolean(False)),
+            #("active", bson.Array([bson.Int32(1939), bson.Int32(1992)])),
+            #("height", bson.Double(1.75)),
+            #("religion", bson.Null),
           ]),
         ),
-        #("ISBN", value.Str("0-553-29335-4")),
+        #("ISBN", bson.Str("0-553-29335-4")),
       ]),
     ),
   ]
