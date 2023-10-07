@@ -11,13 +11,12 @@ import bison/object_id
 import birl/time
 import birl/duration
 
-type Entity {
-  Entity(kind: kind.Kind, value: BitString)
-}
+type Entity =
+  #(kind.Kind, BitString)
 
 pub fn encode(doc: List(#(String, bson.Value))) -> BitString {
   case document(doc) {
-    Entity(kind: _, value: value) -> value
+    #(_, value) -> value
   }
 }
 
@@ -28,9 +27,9 @@ fn document(doc: List(#(String, bson.Value))) -> Entity {
     |> bit_string.concat
 
   let size = bit_string.byte_size(doc) + 5
-  Entity(
-    kind: kind.document,
-    value: [<<size:32-little>>, doc, <<0>>]
+  #(
+    kind.document,
+    [<<size:32-little>>, doc, <<0>>]
     |> bit_string.concat,
   )
 }
@@ -61,32 +60,32 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitString {
   }
 
   case value {
-    Entity(kind: kind, value: value) ->
+    #(kind, value) ->
       [kind.code, key, value]
       |> bit_string.concat
   }
 }
 
 fn null() -> Entity {
-  Entity(kind: kind.null, value: <<>>)
+  #(kind.null, <<>>)
 }
 
 fn min() -> Entity {
-  Entity(kind: kind.min, value: <<>>)
+  #(kind.min, <<>>)
 }
 
 fn max() -> Entity {
-  Entity(kind: kind.max, value: <<>>)
+  #(kind.max, <<>>)
 }
 
 fn js(value: String) -> Entity {
   let length = bit_string.byte_size(<<value:utf8>>) + 1
-  Entity(kind: kind.js, value: <<length:32-little, value:utf8, 0>>)
+  #(kind.js, <<length:32-little, value:utf8, 0>>)
 }
 
 fn string(value: String) -> Entity {
   let length = bit_string.byte_size(<<value:utf8>>) + 1
-  Entity(kind: kind.string, value: <<length:32-little, value:utf8, 0>>)
+  #(kind.string, <<length:32-little, value:utf8, 0>>)
 }
 
 fn array(value: List(bson.Value)) -> Entity {
@@ -94,50 +93,50 @@ fn array(value: List(bson.Value)) -> Entity {
     list.index_map(value, fn(index, item) { #(int.to_string(index), item) })
     |> document
   {
-    Entity(kind: _, value: value) -> Entity(kind: kind.array, value: value)
+    #(_, value) -> #(kind.array, value)
   }
 }
 
 fn double(value: Float) -> Entity {
-  Entity(kind: kind.double, value: <<value:little-float>>)
+  #(kind.double, <<value:little-float>>)
 }
 
 fn boolean(value: Bool) -> Entity {
   case value {
-    True -> Entity(kind: kind.boolean, value: <<1>>)
-    False -> Entity(kind: kind.boolean, value: <<0>>)
+    True -> #(kind.boolean, <<1>>)
+    False -> #(kind.boolean, <<0>>)
   }
 }
 
 fn int32(value: Int) -> Entity {
-  Entity(kind: kind.int32, value: <<value:32-little>>)
+  #(kind.int32, <<value:32-little>>)
 }
 
 fn int64(value: Int) -> Entity {
-  Entity(kind: kind.int64, value: <<value:64-little>>)
+  #(kind.int64, <<value:64-little>>)
 }
 
 fn datetime(value: time.DateTime) -> Entity {
   let duration.Duration(value) = time.difference(value, time.unix_epoch)
   let value = value / 1000
-  Entity(kind: kind.datetime, value: <<value:64-little>>)
+  #(kind.datetime, <<value:64-little>>)
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {
-  Entity(kind: kind.object_id, value: object_id.to_bit_string(value))
+  #(kind.object_id, object_id.to_bit_string(value))
 }
 
 fn timestamp(value: Int) -> Entity {
-  Entity(kind: kind.timestamp, value: <<value:64-little>>)
+  #(kind.timestamp, <<value:64-little>>)
 }
 
 fn md5(value: md5.MD5) -> Entity {
   let value = md5.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
-  Entity(
-    kind: kind.binary,
-    value: [<<length:32-little>>, kind.md5.code, value]
+  #(
+    kind.binary,
+    [<<length:32-little>>, kind.md5.code, value]
     |> bit_string.concat,
   )
 }
@@ -146,9 +145,9 @@ fn uuid(value: uuid.UUID) -> Entity {
   let value = uuid.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
-  Entity(
-    kind: kind.binary,
-    value: [<<length:32-little>>, kind.uuid.code, value]
+  #(
+    kind.binary,
+    [<<length:32-little>>, kind.uuid.code, value]
     |> bit_string.concat,
   )
 }
@@ -157,9 +156,9 @@ fn custom(value: custom.Custom) -> Entity {
   let #(code, value) = custom.to_bit_string_with_code(value)
   let length = bit_string.byte_size(value)
 
-  Entity(
-    kind: kind.binary,
-    value: [<<length:32-little>>, <<code>>, value]
+  #(
+    kind.binary,
+    [<<length:32-little>>, <<code>>, value]
     |> bit_string.concat,
   )
 }
@@ -168,17 +167,17 @@ fn generic(value: generic.Generic) -> Entity {
   let value = generic.to_bit_string(value)
   let length = bit_string.byte_size(value)
 
-  Entity(
-    kind: kind.binary,
-    value: [<<length:32-little>>, kind.generic.code, value]
+  #(
+    kind.binary,
+    [<<length:32-little>>, kind.generic.code, value]
     |> bit_string.concat,
   )
 }
 
 fn regex(pattern: String, options: String) -> Entity {
-  Entity(
-    kind: kind.regex,
-    value: [<<pattern:utf8, 0, options:utf8, 0>>]
+  #(
+    kind.regex,
+    [<<pattern:utf8, 0, options:utf8, 0>>]
     |> bit_string.concat,
   )
 }
