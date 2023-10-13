@@ -1,3 +1,8 @@
+![bison](https://raw.githubusercontent.com/massivefermion/bison/main/logo.png)
+
+[![Package Version](https://img.shields.io/hexpm/v/bison)](https://hex.pm/packages/bison)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/bison/)
+
 # bison (formerly gleam_bson)
 
 bson encoder and decoder for gleam
@@ -36,15 +41,15 @@ import bison/bson
 import bison.{encode}
 import bison/object_id
 
-fn cat_to_bson(cat: Cat) -> Result(BitString, Nil) {
-  use id <- result.then(object_id.from_string(cat.id))
-  use checksum <- result.then(md5.from_string(cat.checksum))
+fn calf_to_bson(calf: Calf) -> Result(BitString, Nil) {
+  use id <- result.then(object_id.from_string(calf.id))
+  use checksum <- result.then(md5.from_string(calf.checksum))
 
   Ok(encode([
     #("id", bson.ObjectId(id)),
-    #("name", bson.Str(cat.name)),
-    #("lives", bson.Int32(cat.lives)),
-    #("nicknames", bson.Array(list.map(cat.nicknames, bson.Str))),
+    #("name", bson.Str(calf.name)),
+    #("lives", bson.Int32(calf.lives)),
+    #("nicknames", bson.Array(list.map(calf.nicknames, bson.Str))),
     #("checksum", bson.Binary(bson.MD5(checksum))),
     #("name_pattern", bson.Regex(#("[a-z][a-z0-9]+", ""))),
   ]))
@@ -61,7 +66,7 @@ import bison/bson
 import bison.{decode}
 import bison/object_id
 
-fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
+fn calf_from_bson(data: BitString) -> Result(Calf, Nil) {
   use doc <- result.then(decode(data))
 
   let [
@@ -73,7 +78,7 @@ fn cat_from_bson(data: BitString) -> Result(Cat, Nil) {
     #("name_pattern", bson.Regex(#(pattern, options))),
   ] = doc
 
-  Ok(Cat(
+  Ok(Calf(
     id: object_id.to_string(id),
     name: name,
     lives: lives,
