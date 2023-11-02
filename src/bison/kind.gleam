@@ -1,9 +1,9 @@
 pub type Kind {
-  Kind(code: BitString)
+  Kind(code: BitArray)
 }
 
 pub type SubKind {
-  SubKind(code: BitString)
+  SubKind(code: BitArray)
 }
 
 pub const double = Kind(code: <<0x01>>)

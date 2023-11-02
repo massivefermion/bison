@@ -5,13 +5,13 @@ import gleam/queue
 import gleam/option
 import gleam/string
 import gleam/iterator
-import gleam/bit_string
+import gleam/bit_array
 import gleam/crypto
 import birl/time
 import birl/duration
 
 pub opaque type ObjectId {
-  ObjectId(BitString)
+  ObjectId(BitArray)
 }
 
 pub fn new() -> ObjectId {
@@ -24,13 +24,12 @@ pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
   let assert Ok(counter) = int.modulo(time.monotonic_now(), 0xffffff)
 
   let assert Ok(hostname) = get_hostname()
-  let <<machine_id:size(24), _:bit_string>> =
-    crypto.hash(crypto.Sha256, hostname)
+  let <<machine_id:size(24), _:bits>> = crypto.hash(crypto.Sha256, hostname)
 
   let assert Ok(string_pid) =
     get_pid()
-    |> list.fold(<<>>, fn(acc, c) { <<acc:bit_string, c>> })
-    |> bit_string.to_string
+    |> list.fold(<<>>, fn(acc, c) { <<acc:bits, c>> })
+    |> bit_array.to_string
 
   let assert Ok(pid) = int.parse(string_pid)
 
@@ -44,7 +43,7 @@ pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
 /// see [birl](https://hex.pm/packages/birl)!
 pub fn to_datetime(id: ObjectId) -> time.DateTime {
   case id {
-    ObjectId(<<timestamp:big-32, _:bit_string>>) -> time.from_unix(timestamp)
+    ObjectId(<<timestamp:big-32, _:bits>>) -> time.from_unix(timestamp)
   }
 }
 
@@ -95,7 +94,7 @@ pub fn to_int_list(id: ObjectId) -> List(Int) {
   }
 }
 
-pub fn to_bit_string(id: ObjectId) -> BitString {
+pub fn to_bit_string(id: ObjectId) -> BitArray {
   case id {
     ObjectId(value) -> value
   }
@@ -116,7 +115,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
             let [high, low] = pair
             <<high:4, low:4>>
           })
-          |> bit_string.concat
+          |> bit_array.concat
           |> ObjectId
           |> Ok
         Error(Nil) -> Error(Nil)
@@ -135,7 +134,7 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
           fn(acc, code) {
             case code >= 0 && code <= 255 {
               True ->
-                bit_string.append(acc, <<code>>)
+                bit_array.append(acc, <<code>>)
                 |> Ok
               False -> Error(Nil)
             }
@@ -166,7 +165,7 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
             let <<num:8>> = <<high:4, low:4>>
             num
           })
-          |> list.fold(<<>>, fn(acc, code) { bit_string.append(acc, <<code>>) })
+          |> list.fold(<<>>, fn(acc, code) { bit_array.append(acc, <<code>>) })
           |> ObjectId
           |> Ok
         Error(Nil) -> Error(Nil)
@@ -176,52 +175,52 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
   }
 }
 
-pub fn from_bit_string(id: BitString) -> Result(ObjectId, Nil) {
-  case bit_string.byte_size(id) {
+pub fn from_bit_string(id: BitArray) -> Result(ObjectId, Nil) {
+  case bit_array.byte_size(id) {
     12 -> Ok(ObjectId(id))
     _ -> Error(Nil)
   }
 }
 
-fn to_string_internal(remaining: BitString, storage: String) -> String {
-  let <<high:4, low:4, remaining:binary>> = remaining
+fn to_string_internal(remaining: BitArray, storage: String) -> String {
+  let <<high:4, low:4, remaining:bytes>> = remaining
 
   let new_storage =
     storage
     |> string.append(to_char(high))
     |> string.append(to_char(low))
 
-  case bit_string.byte_size(remaining) {
+  case bit_array.byte_size(remaining) {
     0 -> new_storage
     _ -> to_string_internal(remaining, new_storage)
   }
 }
 
 fn to_int_list_internal(
-  remaining: BitString,
+  remaining: BitArray,
   storage: queue.Queue(Int),
 ) -> List(Int) {
-  let <<num:8, remaining:binary>> = remaining
+  let <<num:8, remaining:bytes>> = remaining
 
   let new_storage = queue.push_back(storage, num)
 
-  case bit_string.byte_size(remaining) {
+  case bit_array.byte_size(remaining) {
     0 -> queue.to_list(new_storage)
     _ -> to_int_list_internal(remaining, new_storage)
   }
 }
 
 fn to_digit(char: String) -> Result(Int, Nil) {
-  let <<code>> = bit_string.from_string(char)
+  let <<code>> = bit_array.from_string(char)
 
   case code {
     code if code >= 48 && code <= 57 -> {
-      let <<_:4, num:4>> = bit_string.from_string(char)
+      let <<_:4, num:4>> = bit_array.from_string(char)
       Ok(num)
     }
 
     code if code >= 65 && code <= 70 || code >= 97 && code <= 102 -> {
-      let <<_:5, additive:3>> = bit_string.from_string(char)
+      let <<_:5, additive:3>> = bit_array.from_string(char)
       Ok(9 + additive)
     }
 
@@ -234,12 +233,12 @@ fn to_char(digit: Int) -> String {
     True -> digit + 48
     False -> digit + 87
   }
-  let assert Ok(digit) = bit_string.to_string(<<ch>>)
+  let assert Ok(digit) = bit_array.to_string(<<ch>>)
   digit
 }
 
 @external(erlang, "inet", "gethostname")
-fn get_hostname() -> Result(BitString, Nil)
+fn get_hostname() -> Result(BitArray, Nil)
 
 @external(erlang, "os", "getpid")
 fn get_pid() -> List(Int)

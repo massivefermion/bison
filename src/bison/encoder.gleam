@@ -1,6 +1,6 @@
 import gleam/int
 import gleam/list
-import gleam/bit_string
+import gleam/bit_array
 import bison/md5
 import bison/uuid
 import bison/kind
@@ -12,9 +12,9 @@ import birl/time
 import birl/duration
 
 type Entity =
-  #(kind.Kind, BitString)
+  #(kind.Kind, BitArray)
 
-pub fn encode(doc: List(#(String, bson.Value))) -> BitString {
+pub fn encode(doc: List(#(String, bson.Value))) -> BitArray {
   case document(doc) {
     #(_, value) -> value
   }
@@ -24,17 +24,17 @@ fn document(doc: List(#(String, bson.Value))) -> Entity {
   let doc =
     doc
     |> list.map(encode_kv)
-    |> bit_string.concat
+    |> bit_array.concat
 
-  let size = bit_string.byte_size(doc) + 5
+  let size = bit_array.byte_size(doc) + 5
   #(
     kind.document,
     [<<size:32-little>>, doc, <<0>>]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }
 
-fn encode_kv(pair: #(String, bson.Value)) -> BitString {
+fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
   let key = <<pair.0:utf8, 0>>
 
   let value = case pair.1 {
@@ -51,18 +51,18 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitString {
     bson.Document(value) -> document(value)
     bson.DateTime(value) -> datetime(value)
     bson.ObjectId(value) -> object_id(value)
-    bson.Timestamp(value) -> timestamp(value)
     bson.Binary(bson.MD5(value)) -> md5(value)
     bson.Binary(bson.UUID(value)) -> uuid(value)
     bson.Binary(bson.Custom(value)) -> custom(value)
     bson.Binary(bson.Generic(value)) -> generic(value)
     bson.Regex(#(pattern, options)) -> regex(pattern, options)
+    bson.Timestamp(stamp, counter) -> timestamp(stamp, counter)
   }
 
   case value {
     #(kind, value) ->
       [kind.code, key, value]
-      |> bit_string.concat
+      |> bit_array.concat
   }
 }
 
@@ -79,12 +79,12 @@ fn max() -> Entity {
 }
 
 fn js(value: String) -> Entity {
-  let length = bit_string.byte_size(<<value:utf8>>) + 1
+  let length = bit_array.byte_size(<<value:utf8>>) + 1
   #(kind.js, <<length:32-little, value:utf8, 0>>)
 }
 
 fn string(value: String) -> Entity {
-  let length = bit_string.byte_size(<<value:utf8>>) + 1
+  let length = bit_array.byte_size(<<value:utf8>>) + 1
   #(kind.string, <<length:32-little, value:utf8, 0>>)
 }
 
@@ -126,51 +126,51 @@ fn object_id(value: object_id.ObjectId) -> Entity {
   #(kind.object_id, object_id.to_bit_string(value))
 }
 
-fn timestamp(value: Int) -> Entity {
-  #(kind.timestamp, <<value:64-little>>)
+fn timestamp(stamp: Int, counter: Int) -> Entity {
+  #(kind.timestamp, <<counter:32-little, stamp:32-little>>)
 }
 
 fn md5(value: md5.MD5) -> Entity {
   let value = md5.to_bit_string(value)
-  let length = bit_string.byte_size(value)
+  let length = bit_array.byte_size(value)
 
   #(
     kind.binary,
     [<<length:32-little>>, kind.md5.code, value]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }
 
 fn uuid(value: uuid.UUID) -> Entity {
   let value = uuid.to_bit_string(value)
-  let length = bit_string.byte_size(value)
+  let length = bit_array.byte_size(value)
 
   #(
     kind.binary,
     [<<length:32-little>>, kind.uuid.code, value]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }
 
 fn custom(value: custom.Custom) -> Entity {
   let #(code, value) = custom.to_bit_string_with_code(value)
-  let length = bit_string.byte_size(value)
+  let length = bit_array.byte_size(value)
 
   #(
     kind.binary,
     [<<length:32-little>>, <<code>>, value]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }
 
 fn generic(value: generic.Generic) -> Entity {
   let value = generic.to_bit_string(value)
-  let length = bit_string.byte_size(value)
+  let length = bit_array.byte_size(value)
 
   #(
     kind.binary,
     [<<length:32-little>>, kind.generic.code, value]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }
 
@@ -178,6 +178,6 @@ fn regex(pattern: String, options: String) -> Entity {
   #(
     kind.regex,
     [<<pattern:utf8, 0, options:utf8, 0>>]
-    |> bit_string.concat,
+    |> bit_array.concat,
   )
 }

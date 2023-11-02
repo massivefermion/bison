@@ -1,9 +1,9 @@
-import bison/md5.{MD5}
-import bison/uuid.{UUID}
-import bison/custom.{Custom}
-import bison/generic.{Generic}
-import bison/object_id.{ObjectId}
-import birl/time.{DateTime}
+import bison/md5.{type MD5}
+import bison/uuid.{type UUID}
+import bison/custom.{type Custom}
+import bison/generic.{type Generic}
+import bison/object_id.{type ObjectId}
+import birl/time.{type DateTime}
 
 /// if you're not familiar with type `DateTime`, see [birl](https://hex.pm/packages/birl)!
 pub type Value {
@@ -17,10 +17,10 @@ pub type Value {
   Double(Float)
   Boolean(Bool)
   Binary(Binary)
-  Timestamp(Int)
   Array(List(Value))
   ObjectId(ObjectId)
   DateTime(DateTime)
+  Timestamp(Int, Int)
   Regex(#(String, String))
   Document(List(#(String, Value)))
 }
