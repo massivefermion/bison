@@ -49,15 +49,8 @@ fn decode_body(
   use <- bool.guard(bit_array.byte_size(data) == 0, Ok(storage))
 
   let <<code:8, data:bits>> = data
-  let total_size = bit_array.byte_size(data)
-  use key <- result.then(consume_till_zero(data, <<>>))
-  let key_size = bit_array.byte_size(key)
+  use #(key, rest) <- result.then(consume_till_zero(data, <<>>))
   use key <- result.then(bit_array.to_string(key))
-  use rest <- result.then(bit_array.slice(
-    data,
-    key_size + 1,
-    total_size - key_size - 1,
-  ))
 
   let kind = bison_kind.Kind(code: <<code>>)
   case kind {
@@ -112,12 +105,8 @@ fn decode_body(
     }
 
     kind if kind == bison_kind.regex -> {
-      use pattern_bytes <- result.then(consume_till_zero(rest, <<>>))
-      let pattern_size = { bit_array.byte_size(pattern_bytes) + 1 } * 8
-      let <<_:size(pattern_size), rest:bits>> = rest
-      use options_bytes <- result.then(consume_till_zero(rest, <<>>))
-      let options_size = { bit_array.byte_size(options_bytes) + 1 } * 8
-      let <<_:size(options_size), rest:bits>> = rest
+      use #(pattern_bytes, rest) <- result.then(consume_till_zero(rest, <<>>))
+      use #(options_bytes, rest) <- result.then(consume_till_zero(rest, <<>>))
       use pattern <- result.then(bit_array.to_string(pattern_bytes))
       use options <- result.then(bit_array.to_string(options_bytes))
       recurse_with_new_kv(rest, storage, key, bson.Regex(#(pattern, options)))
@@ -125,16 +114,11 @@ fn decode_body(
 
     kind if kind == bison_kind.string -> {
       let <<given_size:32-little-int, rest:bits>> = rest
-      use str <- result.then(consume_till_zero(rest, <<>>))
+      use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
       case given_size == str_size + 1 {
         True -> {
           use str <- result.then(bit_array.to_string(str))
-          use rest <- result.then(bit_array.slice(
-            rest,
-            str_size + 1,
-            bit_array.byte_size(rest) - str_size - 1,
-          ))
           recurse_with_new_kv(rest, storage, key, bson.Str(str))
         }
         False -> Error(Nil)
@@ -143,16 +127,11 @@ fn decode_body(
 
     kind if kind == bison_kind.js -> {
       let <<given_size:32-little-int, rest:bits>> = rest
-      use str <- result.then(consume_till_zero(rest, <<>>))
+      use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
       case given_size == str_size + 1 {
         True -> {
           use str <- result.then(bit_array.to_string(str))
-          use rest <- result.then(bit_array.slice(
-            rest,
-            str_size + 1,
-            bit_array.byte_size(rest) - str_size - 1,
-          ))
           recurse_with_new_kv(rest, storage, key, bson.JS(str))
         }
         False -> Error(Nil)
@@ -264,13 +243,16 @@ fn decode_body(
   }
 }
 
-fn consume_till_zero(data: BitArray, storage: BitArray) -> Result(BitArray, Nil) {
+fn consume_till_zero(
+  data: BitArray,
+  storage: BitArray,
+) -> Result(#(BitArray, BitArray), Nil) {
   case bit_array.byte_size(data) {
     0 -> Error(Nil)
     _ -> {
       let <<ch:8, rest:bits>> = data
       case ch {
-        0 -> Ok(storage)
+        0 -> Ok(#(storage, rest))
         _ -> consume_till_zero(rest, bit_array.append(storage, <<ch>>))
       }
     }
