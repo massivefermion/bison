@@ -19,7 +19,7 @@ pub fn to_int_list(uuid: UUID) -> List(Int) {
   }
 }
 
-pub fn to_bit_string(uuid: UUID) -> BitArray {
+pub fn to_bit_array(uuid: UUID) -> BitArray {
   case uuid {
     UUID(value) -> value
   }
@@ -101,7 +101,7 @@ pub fn from_int_list(uuid: List(Int)) -> Result(UUID, Nil) {
   }
 }
 
-pub fn from_bit_string(uuid: BitArray) -> Result(UUID, Nil) {
+pub fn from_bit_array(uuid: BitArray) -> Result(UUID, Nil) {
   case bit_array.byte_size(uuid) {
     16 -> Ok(UUID(uuid))
     _ -> Error(Nil)

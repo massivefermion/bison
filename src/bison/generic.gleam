@@ -18,7 +18,7 @@ pub fn to_int_list(generic: Generic) -> List(Int) {
   }
 }
 
-pub fn to_bit_string(generic: Generic) -> BitArray {
+pub fn to_bit_array(generic: Generic) -> BitArray {
   case generic {
     Generic(data) -> data
   }
@@ -34,7 +34,7 @@ pub fn from_int_list(data: List(Int)) -> Generic {
   |> Generic
 }
 
-pub fn from_bit_string(data: BitArray) -> Result(Generic, Nil) {
+pub fn from_bit_array(data: BitArray) -> Result(Generic, Nil) {
   case bit_size(data) % 8 {
     0 -> Ok(Generic(data))
     _ -> Error(Nil)

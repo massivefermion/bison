@@ -35,7 +35,7 @@ pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
 
   let assert Ok(id) =
     <<moment:big-32, machine_id:big-24, pid:big-16, counter:big-24>>
-    |> from_bit_string
+    |> from_bit_array
 
   id
 }
@@ -94,7 +94,7 @@ pub fn to_int_list(id: ObjectId) -> List(Int) {
   }
 }
 
-pub fn to_bit_string(id: ObjectId) -> BitArray {
+pub fn to_bit_array(id: ObjectId) -> BitArray {
   case id {
     ObjectId(value) -> value
   }
@@ -175,7 +175,7 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
   }
 }
 
-pub fn from_bit_string(id: BitArray) -> Result(ObjectId, Nil) {
+pub fn from_bit_array(id: BitArray) -> Result(ObjectId, Nil) {
   case bit_array.byte_size(id) {
     12 -> Ok(ObjectId(id))
     _ -> Error(Nil)

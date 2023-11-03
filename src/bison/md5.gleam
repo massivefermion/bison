@@ -19,7 +19,7 @@ pub fn to_int_list(md5: MD5) -> List(Int) {
   }
 }
 
-pub fn to_bit_string(md5: MD5) -> BitArray {
+pub fn to_bit_array(md5: MD5) -> BitArray {
   case md5 {
     MD5(value) -> value
   }
@@ -100,7 +100,7 @@ pub fn from_int_list(md5: List(Int)) -> Result(MD5, Nil) {
   }
 }
 
-pub fn from_bit_string(md5: BitArray) -> Result(MD5, Nil) {
+pub fn from_bit_array(md5: BitArray) -> Result(MD5, Nil) {
   case bit_array.byte_size(md5) {
     16 -> Ok(MD5(md5))
     _ -> Error(Nil)

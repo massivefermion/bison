@@ -41,7 +41,7 @@ import bison/bson
 import bison.{encode}
 import bison/object_id
 
-fn calf_to_bson(calf: Calf) -> Result(BitString, Nil) {
+fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
   use id <- result.then(object_id.from_string(calf.id))
   use checksum <- result.then(md5.from_string(calf.checksum))
 
@@ -66,7 +66,7 @@ import bison/bson
 import bison.{decode}
 import bison/object_id
 
-fn calf_from_bson(data: BitString) -> Result(Calf, Nil) {
+fn calf_from_bson(data: BitArray) -> Result(Calf, Nil) {
   use doc <- result.then(decode(data))
 
   let [

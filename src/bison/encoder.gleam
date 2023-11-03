@@ -123,7 +123,7 @@ fn datetime(value: time.DateTime) -> Entity {
 }
 
 fn object_id(value: object_id.ObjectId) -> Entity {
-  #(kind.object_id, object_id.to_bit_string(value))
+  #(kind.object_id, object_id.to_bit_array(value))
 }
 
 fn timestamp(stamp: Int, counter: Int) -> Entity {
@@ -131,7 +131,7 @@ fn timestamp(stamp: Int, counter: Int) -> Entity {
 }
 
 fn md5(value: md5.MD5) -> Entity {
-  let value = md5.to_bit_string(value)
+  let value = md5.to_bit_array(value)
   let length = bit_array.byte_size(value)
 
   #(
@@ -142,7 +142,7 @@ fn md5(value: md5.MD5) -> Entity {
 }
 
 fn uuid(value: uuid.UUID) -> Entity {
-  let value = uuid.to_bit_string(value)
+  let value = uuid.to_bit_array(value)
   let length = bit_array.byte_size(value)
 
   #(
@@ -153,7 +153,7 @@ fn uuid(value: uuid.UUID) -> Entity {
 }
 
 fn custom(value: custom.Custom) -> Entity {
-  let #(code, value) = custom.to_bit_string_with_code(value)
+  let #(code, value) = custom.to_bit_array_with_code(value)
   let length = bit_array.byte_size(value)
 
   #(
@@ -164,7 +164,7 @@ fn custom(value: custom.Custom) -> Entity {
 }
 
 fn generic(value: generic.Generic) -> Entity {
-  let value = generic.to_bit_string(value)
+  let value = generic.to_bit_array(value)
   let length = bit_array.byte_size(value)
 
   #(

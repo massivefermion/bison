@@ -84,7 +84,7 @@ fn decode_body(
 
     kind if kind == bison_kind.object_id -> {
       let <<value:96-bits, rest:bits>> = rest
-      use oid <- result.then(object_id.from_bit_string(value))
+      use oid <- result.then(object_id.from_bit_array(value))
       recurse_with_new_kv(rest, storage, key, bson.ObjectId(oid))
     }
 
@@ -181,7 +181,7 @@ fn decode_body(
       let sub_kind = bison_kind.SubKind(code: <<sub_code>>)
       case sub_kind {
         sub_kind if sub_kind == bison_kind.generic -> {
-          use value <- result.then(generic.from_bit_string(value))
+          use value <- result.then(generic.from_bit_array(value))
 
           recurse_with_new_kv(
             rest,
@@ -194,7 +194,7 @@ fn decode_body(
         }
 
         sub_kind if sub_kind == bison_kind.md5 -> {
-          use value <- result.then(md5.from_bit_string(value))
+          use value <- result.then(md5.from_bit_array(value))
 
           recurse_with_new_kv(
             rest,
@@ -207,7 +207,7 @@ fn decode_body(
         }
 
         sub_kind if sub_kind == bison_kind.uuid -> {
-          use value <- result.then(uuid.from_bit_string(value))
+          use value <- result.then(uuid.from_bit_array(value))
 
           recurse_with_new_kv(
             rest,
@@ -220,7 +220,7 @@ fn decode_body(
         }
 
         _ if sub_code >= 0x80 -> {
-          use value <- result.then(custom.from_bit_string_with_code(
+          use value <- result.then(custom.from_bit_array_with_code(
             sub_code,
             value,
           ))
