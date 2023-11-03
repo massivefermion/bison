@@ -7,20 +7,20 @@
 
 bson encoder and decoder for gleam
 
-## Quick start
+## 🦬 Quick start
 
 ```sh
 gleam test  # Run the tests
 gleam shell # Run an Erlang shell
 ```
 
-## Installation
+## 🦬 Installation
 
 ```sh
 gleam add bison
 ```
 
-## Roadmap
+## 🦬 Roadmap
 
 - [x] support encoding and decoding basic bson types (null, string, int32, int64, double, boolean, objectId, array, document).
 - [x] support encoding and decoding min, max, timestamp, datetime, javascript and regex bson types.
@@ -29,7 +29,7 @@ gleam add bison
 - [ ] support encoding and decoding decimal128 bson type.
 - [ ] support encoding and decoding encrypted binary subtype.
 
-## Usage
+## 🦬 Usage
 
 ### Encoding
 
@@ -48,10 +48,10 @@ fn calf_to_bson(calf: Calf) -> Result(BitString, Nil) {
   Ok(encode([
     #("id", bson.ObjectId(id)),
     #("name", bson.Str(calf.name)),
-    #("lives", bson.Int32(calf.lives)),
-    #("nicknames", bson.Array(list.map(calf.nicknames, bson.Str))),
+    #("age", bson.Int32(calf.age)),
+    #("birthdate", bson.DateTime(calf.birthdate)),
     #("checksum", bson.Binary(bson.MD5(checksum))),
-    #("name_pattern", bson.Regex(#("[a-z][a-z0-9]+", ""))),
+    #("nicknames", bson.Array(list.map(calf.nicknames, bson.Str))),
   ]))
 }
 ```
@@ -72,16 +72,16 @@ fn calf_from_bson(data: BitString) -> Result(Calf, Nil) {
   let [
     #("id", bson.ObjectId(id)),
     #("name", bson.Str(name)),
-    #("lives", bson.Int32(lives)),
+    #("age", bson.Int32(age)),
     #("nicknames", bson.Array(nicknames)),
+    #("birthdate", bson.DateTime(birthdate)),
     #("checksum", bson.Binary(bson.MD5(checksum))),
-    #("name_pattern", bson.Regex(#(pattern, options))),
   ] = doc
 
   Ok(Calf(
     id: object_id.to_string(id),
     name: name,
-    lives: lives,
+    age: age,
     nicknames: list.map(
       nicknames,
       fn(n) {
@@ -89,6 +89,7 @@ fn calf_from_bson(data: BitString) -> Result(Calf, Nil) {
         n
       },
     ),
+    birthdate: birthdate,
     checksum: md5.to_string(checksum),
   ))
 }
