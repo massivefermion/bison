@@ -6,7 +6,6 @@ import gleam/option
 import gleam/string
 import gleam/iterator
 import gleam/bit_array
-import gleam/crypto
 import birl/time
 import birl/duration
 
@@ -24,7 +23,7 @@ pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
   let assert Ok(counter) = int.modulo(time.monotonic_now(), 0xffffff)
 
   let assert Ok(hostname) = get_hostname()
-  let <<machine_id:size(24), _:bits>> = crypto.hash(crypto.Sha256, hostname)
+  let <<machine_id:size(24), _:bits>> = hash(hostname)
 
   let assert Ok(string_pid) =
     get_pid()
@@ -237,8 +236,11 @@ fn to_char(digit: Int) -> String {
   digit
 }
 
-@external(erlang, "inet", "gethostname")
-fn get_hostname() -> Result(BitArray, Nil)
-
 @external(erlang, "os", "getpid")
 fn get_pid() -> List(Int)
+
+@external(erlang, "bison_ffi", "hash")
+fn hash(data: BitArray) -> BitArray
+
+@external(erlang, "inet", "gethostname")
+fn get_hostname() -> Result(BitArray, Nil)

@@ -1,12 +1,12 @@
 name = "bison"
 target = "erlang"
-version = "0.29.1"
+version = "0.30.0"
 
 description = "BSON encoder and decoder for Gleam (formerly gleam_bson)"
 licences = ["Apache-2.0"]
 links = [
-  {title = "gleam", href = "https://gleam.run"},
-  {title = "bson", href = "https://bsonspec.org"},
+  {title = "Gleam", href = "https://gleam.run"},
+  {title = "BSON", href = "https://bsonspec.org"},
 ]
 repository = {type = "github", user = "massivefermion", repo = "bison"}
 
@@ -19,7 +19,6 @@ internal_modules = [
 
 [dependencies]
 birl = "~> 0.17"
-gleam_crypto = "~> 0.4"
 gleam_stdlib = "~> 0.32"
 
 [dev-dependencies]

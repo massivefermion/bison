@@ -49,7 +49,9 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
     #("id", bson.ObjectId(id)),
     #("name", bson.Str(calf.name)),
     #("age", bson.Int32(calf.age)),
+    #("weight", bson.Double(calf.weight)),
     #("birthdate", bson.DateTime(calf.birthdate)),
+    #("is_healthy", bson.Boolean(calf.is_healthy)),
     #("checksum", bson.Binary(bson.MD5(checksum))),
     #("nicknames", bson.Array(list.map(calf.nicknames, bson.Str))),
   ]))
@@ -71,17 +73,20 @@ fn calf_from_bson(data: BitArray) -> Result(Calf, Nil) {
 
   let [
     #("id", bson.ObjectId(id)),
-    #("name", bson.Str(name)),
     #("age", bson.Int32(age)),
+    #("name", bson.Str(name)),
+    #("weight", bson.Double(weight)),
     #("nicknames", bson.Array(nicknames)),
     #("birthdate", bson.DateTime(birthdate)),
+    #("is_healthy", bson.Boolean(is_healthy)),
     #("checksum", bson.Binary(bson.MD5(checksum))),
   ] = doc
 
   Ok(Calf(
     id: object_id.to_string(id),
-    name: name,
     age: age,
+    name: name,
+    weight: weight,
     nicknames: list.map(
       nicknames,
       fn(n) {
@@ -90,7 +95,9 @@ fn calf_from_bson(data: BitArray) -> Result(Calf, Nil) {
       },
     ),
     birthdate: birthdate,
+    is_healthy: is_healthy,
     checksum: md5.to_string(checksum),
   ))
 }
+
 ```
