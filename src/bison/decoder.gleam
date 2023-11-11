@@ -119,7 +119,7 @@ fn decode_body(
       case given_size == str_size + 1 {
         True -> {
           use str <- result.then(bit_array.to_string(str))
-          recurse_with_new_kv(rest, storage, key, bson.Str(str))
+          recurse_with_new_kv(rest, storage, key, bson.String(str))
         }
         False -> Error(Nil)
       }

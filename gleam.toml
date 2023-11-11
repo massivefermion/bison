@@ -1,6 +1,6 @@
 name = "bison"
 target = "erlang"
-version = "0.30.0"
+version = "0.31.0"
 
 description = "BSON encoder and decoder for Gleam (formerly gleam_bson)"
 licences = ["Apache-2.0"]

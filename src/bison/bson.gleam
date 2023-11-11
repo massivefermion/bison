@@ -11,12 +11,12 @@ pub type Value {
   Max
   Null
   JS(String)
-  Str(String)
   Int32(Int)
   Int64(Int)
   Double(Float)
   Boolean(Bool)
   Binary(Binary)
+  String(String)
   Array(List(Value))
   ObjectId(ObjectId)
   DateTime(DateTime)

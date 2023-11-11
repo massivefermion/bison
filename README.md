@@ -47,13 +47,13 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
 
   Ok(encode([
     #("id", bson.ObjectId(id)),
-    #("name", bson.Str(calf.name)),
     #("age", bson.Int32(calf.age)),
+    #("name", bson.String(calf.name)),
     #("weight", bson.Double(calf.weight)),
     #("birthdate", bson.DateTime(calf.birthdate)),
     #("is_healthy", bson.Boolean(calf.is_healthy)),
     #("checksum", bson.Binary(bson.MD5(checksum))),
-    #("nicknames", bson.Array(list.map(calf.nicknames, bson.Str))),
+    #("nicknames", bson.Array(list.map(calf.nicknames, bson.String))),
   ]))
 }
 ```
@@ -74,7 +74,7 @@ fn calf_from_bson(data: BitArray) -> Result(Calf, Nil) {
   let [
     #("id", bson.ObjectId(id)),
     #("age", bson.Int32(age)),
-    #("name", bson.Str(name)),
+    #("name", bson.String(name)),
     #("weight", bson.Double(weight)),
     #("nicknames", bson.Array(nicknames)),
     #("birthdate", bson.DateTime(birthdate)),
@@ -90,7 +90,7 @@ fn calf_from_bson(data: BitArray) -> Result(Calf, Nil) {
     nicknames: list.map(
       nicknames,
       fn(n) {
-        let assert bson.Str(n) = n
+        let assert bson.String(n) = n
         n
       },
     ),

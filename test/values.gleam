@@ -28,24 +28,24 @@ pub fn get_doc() -> List(#(String, bson.Value)) {
 
   [
     #("_id", bson.ObjectId(id)),
-    #("metadata", bson.Str("bison_test")),
+    #("metadata", bson.String("bison_test")),
     #(
       "data",
       bson.Document([
-        #("title", bson.Str("Foundation")),
+        #("title", bson.String("Foundation")),
         #("published", bson.Int32(1951)),
         #("pages", bson.Int32(255)),
         #(
           "genre",
           bson.Array([
-            bson.Str("science fiction"),
-            bson.Str("political thriller"),
+            bson.String("science fiction"),
+            bson.String("political thriller"),
           ]),
         ),
         #(
           "author",
           bson.Document([
-            #("name", bson.Str("Isaac Asimov")),
+            #("name", bson.String("Isaac Asimov")),
             #("birthdate", bson.DateTime(author_birthdate)),
             #("alive?", bson.Boolean(False)),
             #("active", bson.Array([bson.Int32(1939), bson.Int32(1992)])),
@@ -53,7 +53,7 @@ pub fn get_doc() -> List(#(String, bson.Value)) {
             #("religion", bson.Null),
           ]),
         ),
-        #("ISBN", bson.Str("0-553-29335-4")),
+        #("ISBN", bson.String("0-553-29335-4")),
       ]),
     ),
   ]
