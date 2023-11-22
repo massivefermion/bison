@@ -6,7 +6,7 @@ import gleam/option
 import gleam/string
 import gleam/iterator
 import gleam/bit_array
-import birl/time
+import birl
 import birl/duration
 
 pub opaque type ObjectId {
@@ -14,13 +14,13 @@ pub opaque type ObjectId {
 }
 
 pub fn new() -> ObjectId {
-  from_datetime(time.utc_now())
+  from_datetime(birl.utc_now())
 }
 
 /// see [birl](https://hex.pm/packages/birl)!
-pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
-  let moment = time.to_unix(datetime)
-  let assert Ok(counter) = int.modulo(time.monotonic_now(), 0xffffff)
+pub fn from_datetime(datetime: birl.Time) -> ObjectId {
+  let moment = birl.to_unix(datetime)
+  let assert Ok(counter) = int.modulo(birl.monotonic_now(), 0xffffff)
 
   let assert Ok(hostname) = get_hostname()
   let <<machine_id:size(24), _:bits>> = hash(hostname)
@@ -40,9 +40,9 @@ pub fn from_datetime(datetime: time.DateTime) -> ObjectId {
 }
 
 /// see [birl](https://hex.pm/packages/birl)!
-pub fn to_datetime(id: ObjectId) -> time.DateTime {
+pub fn to_datetime(id: ObjectId) -> birl.Time {
   case id {
-    ObjectId(<<timestamp:big-32, _:bits>>) -> time.from_unix(timestamp)
+    ObjectId(<<timestamp:big-32, _:bits>>) -> birl.from_unix(timestamp)
   }
 }
 
@@ -55,7 +55,7 @@ pub fn range(
   to b: option.Option(ObjectId),
   step s: duration.Duration,
 ) {
-  time.range(to_datetime(a), option.map(b, to_datetime), s)
+  birl.range(to_datetime(a), option.map(b, to_datetime), s)
   |> iterator.map(from_datetime)
 }
 

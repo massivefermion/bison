@@ -7,11 +7,11 @@ import gleam/bit_array
 import bison/md5
 import bison/uuid
 import bison/bson
+import bison/kind
 import bison/custom
 import bison/generic
 import bison/object_id
-import bison/kind as bison_kind
-import birl/time
+import birl
 import birl/duration
 
 pub fn decode(data: BitArray) -> Result(List(#(String, bson.Value)), Nil) {
@@ -52,67 +52,63 @@ fn decode_body(
   use #(key, rest) <- result.then(consume_till_zero(data, <<>>))
   use key <- result.then(bit_array.to_string(key))
 
-  let kind = bison_kind.Kind(code: <<code>>)
-  case kind {
-    kind if kind == bison_kind.min ->
-      recurse_with_new_kv(rest, storage, key, bson.Min)
-    kind if kind == bison_kind.max ->
-      recurse_with_new_kv(rest, storage, key, bson.Max)
-    kind if kind == bison_kind.null ->
-      recurse_with_new_kv(rest, storage, key, bson.Null)
+  case kind.Kind(code: <<code>>) {
+    k if k == kind.min -> recurse_with_new_kv(rest, storage, key, bson.Min)
+    k if k == kind.max -> recurse_with_new_kv(rest, storage, key, bson.Max)
+    k if k == kind.null -> recurse_with_new_kv(rest, storage, key, bson.Null)
 
-    kind if kind == bison_kind.int32 -> {
+    k if k == kind.int32 -> {
       let <<value:32-little-signed, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Int32(value))
     }
 
-    kind if kind == bison_kind.int64 -> {
+    k if k == kind.int64 -> {
       let <<value:64-little-signed, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Int64(value))
     }
 
-    kind if kind == bison_kind.double -> {
+    k if k == kind.double -> {
       let <<value:little-float, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Double(value))
     }
 
-    kind if kind == bison_kind.timestamp -> {
+    k if k == kind.timestamp -> {
       let <<counter:32-little-unsigned, stamp:32-little-unsigned, rest:bits>> =
         rest
       recurse_with_new_kv(rest, storage, key, bson.Timestamp(stamp, counter))
     }
 
-    kind if kind == bison_kind.object_id -> {
+    k if k == kind.object_id -> {
       let <<value:96-bits, rest:bits>> = rest
       use oid <- result.then(object_id.from_bit_array(value))
       recurse_with_new_kv(rest, storage, key, bson.ObjectId(oid))
     }
 
-    kind if kind == bison_kind.boolean -> {
+    k if k == kind.boolean -> {
       let <<value:8, rest:bits>> = rest
       use value <- decode_boolean(value)
       recurse_with_new_kv(rest, storage, key, bson.Boolean(value))
     }
 
-    kind if kind == bison_kind.datetime -> {
+    k if k == kind.datetime -> {
       let <<value:64-little-signed, rest:bits>> = rest
       let value =
-        time.add(
-          time.unix_epoch,
+        birl.add(
+          birl.unix_epoch,
           duration.accurate_new([#(value, duration.MilliSecond)]),
         )
       recurse_with_new_kv(rest, storage, key, bson.DateTime(value))
     }
 
-    kind if kind == bison_kind.regex -> {
+    k if k == kind.regex -> {
       use #(pattern_bytes, rest) <- result.then(consume_till_zero(rest, <<>>))
       use #(options_bytes, rest) <- result.then(consume_till_zero(rest, <<>>))
       use pattern <- result.then(bit_array.to_string(pattern_bytes))
       use options <- result.then(bit_array.to_string(options_bytes))
-      recurse_with_new_kv(rest, storage, key, bson.Regex(#(pattern, options)))
+      recurse_with_new_kv(rest, storage, key, bson.Regex(pattern, options))
     }
 
-    kind if kind == bison_kind.string -> {
+    k if k == kind.string -> {
       let <<given_size:32-little-int, rest:bits>> = rest
       use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
@@ -125,7 +121,7 @@ fn decode_body(
       }
     }
 
-    kind if kind == bison_kind.js -> {
+    k if k == kind.js -> {
       let <<given_size:32-little-int, rest:bits>> = rest
       use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
@@ -138,18 +134,18 @@ fn decode_body(
       }
     }
 
-    kind if kind == bison_kind.document || kind == bison_kind.array -> {
+    k if k == kind.document || k == kind.array -> {
       let <<doc_size:32-little-int, _:bits>> = rest
       use doc <- result.then(bit_array.slice(rest, 0, doc_size))
       use doc <- result.then(decode_document(doc))
       let assert bson.Document(doc) = doc
-      use doc <- result.then(case kind {
-        kind if kind == bison_kind.document ->
+      use doc <- result.then(case k {
+        k if k == kind.document ->
           doc
           |> bson.Document
           |> Ok
 
-        kind if kind == bison_kind.array -> {
+        k if k == kind.array -> {
           use doc <- result.then(list.try_map(
             doc,
             fn(item) {
@@ -174,13 +170,12 @@ fn decode_body(
       }
     }
 
-    kind if kind == bison_kind.binary -> {
+    k if k == kind.binary -> {
       let <<byte_size:32-little-int, sub_code:8, rest:bits>> = rest
       let given_size = byte_size * 8
       let <<value:size(given_size)-bits, rest:bits>> = rest
-      let sub_kind = bison_kind.SubKind(code: <<sub_code>>)
-      case sub_kind {
-        sub_kind if sub_kind == bison_kind.generic -> {
+      case kind.SubKind(code: <<sub_code>>) {
+        sub_kind if sub_kind == kind.generic -> {
           use value <- result.then(generic.from_bit_array(value))
 
           recurse_with_new_kv(
@@ -193,7 +188,7 @@ fn decode_body(
           )
         }
 
-        sub_kind if sub_kind == bison_kind.md5 -> {
+        sub_kind if sub_kind == kind.md5 -> {
           use value <- result.then(md5.from_bit_array(value))
 
           recurse_with_new_kv(
@@ -206,7 +201,7 @@ fn decode_body(
           )
         }
 
-        sub_kind if sub_kind == bison_kind.uuid -> {
+        sub_kind if sub_kind == kind.uuid -> {
           use value <- result.then(uuid.from_bit_array(value))
 
           recurse_with_new_kv(

@@ -8,7 +8,7 @@ import bison/bson
 import bison/custom
 import bison/generic
 import bison/object_id
-import birl/time
+import birl
 import birl/duration
 
 type Entity =
@@ -38,9 +38,11 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
   let key = <<pair.0:utf8, 0>>
 
   let value = case pair.1 {
-    bson.Null -> null()
+    bson.NaN -> nan()
     bson.Min -> min()
     bson.Max -> max()
+    bson.Null -> null()
+    bson.Infinity -> infinity()
     bson.JS(value) -> js(value)
     bson.Array(value) -> array(value)
     bson.Int32(value) -> int32(value)
@@ -52,10 +54,11 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.DateTime(value) -> datetime(value)
     bson.ObjectId(value) -> object_id(value)
     bson.Binary(bson.MD5(value)) -> md5(value)
+    bson.NegativeInfinity -> negative_infinity()
     bson.Binary(bson.UUID(value)) -> uuid(value)
     bson.Binary(bson.Custom(value)) -> custom(value)
     bson.Binary(bson.Generic(value)) -> generic(value)
-    bson.Regex(#(pattern, options)) -> regex(pattern, options)
+    bson.Regex(pattern, options) -> regex(pattern, options)
     bson.Timestamp(stamp, counter) -> timestamp(stamp, counter)
   }
 
@@ -68,6 +71,18 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
 
 fn null() -> Entity {
   #(kind.null, <<>>)
+}
+
+fn nan() -> Entity {
+  #(kind.double, <<"NaN":utf8>>)
+}
+
+fn infinity() -> Entity {
+  #(kind.double, <<"Infinity":utf8>>)
+}
+
+fn negative_infinity() -> Entity {
+  #(kind.double, <<"-Infinity":utf8>>)
 }
 
 fn min() -> Entity {
@@ -116,8 +131,8 @@ fn int64(value: Int) -> Entity {
   #(kind.int64, <<value:64-little>>)
 }
 
-fn datetime(value: time.DateTime) -> Entity {
-  let duration.Duration(value) = time.difference(value, time.unix_epoch)
+fn datetime(value: birl.Time) -> Entity {
+  let duration.Duration(value) = birl.difference(value, birl.unix_epoch)
   let value = value / 1000
   #(kind.datetime, <<value:64-little>>)
 }

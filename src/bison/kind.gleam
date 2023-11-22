@@ -42,9 +42,9 @@ pub const max = Kind(code: <<0x7F>>)
 
 pub const generic = SubKind(code: <<0x0>>)
 
-pub const md5 = SubKind(code: <<0x5>>)
-
 pub const uuid = SubKind(code: <<0x4>>)
+
+pub const md5 = SubKind(code: <<0x5>>)
 
 pub const int32_min = -2_147_483_648
 

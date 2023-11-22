@@ -1,6 +1,6 @@
 import bison/bson
 import bison/object_id
-import birl/time
+import birl
 
 pub const bson = <<
   52, 1, 0, 0, 7, 95, 105, 100, 0, 97, 62, 12, 151, 23, 70, 138, 110, 75, 252,
@@ -22,9 +22,11 @@ pub const bson = <<
   0, 0, 0,
 >>
 
+pub const ejson = "{\"_id\":{\"$oid\":\"613e0c9717468a6e4bfc646d\"},\"metadata\":\"bison_test\",\"data\":{\"title\":\"Foundation\",\"published\":{\"$numberInt\":\"1951\"},\"pages\":{\"$numberInt\":\"255\"},\"genre\":[\"science fiction\",\"political thriller\"],\"author\":{\"name\":\"Isaac Asimov\",\"birthdate\":{\"$date\":{\"$numberLong\":\"-1577750400000\"}},\"alive?\":false,\"active\":[{\"$numberInt\":\"1939\"},{\"$numberInt\":\"1992\"}],\"height\":{\"$numberDouble\":\"1.75\"},\"religion\":null},\"ISBN\":\"0-553-29335-4\"}}"
+
 pub fn get_doc() -> List(#(String, bson.Value)) {
   let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
-  let author_birthdate = time.set_date(time.unix_epoch, time.Date(1920, 1, 2))
+  let author_birthdate = birl.set_day(birl.unix_epoch, birl.Day(1920, 1, 2))
 
   [
     #("_id", bson.ObjectId(id)),
