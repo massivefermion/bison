@@ -1,4 +1,4 @@
-//// For more information see [here](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/#mongodb-bsontype-Regular-Expression)!
+//// For more information see [here](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json)!
 
 import bison/ejson/encoder
 import bison/ejson/decoder
