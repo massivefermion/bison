@@ -5,6 +5,6 @@ pub fn encode(doc) {
   encoder.encode(doc)
 }
 
-pub fn decode(data) {
-  decoder.decode(data)
+pub fn decode(binary) {
+  decoder.decode(binary)
 }

@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/map
 import gleam/list
 import gleam/bit_array
 import bison/md5
@@ -14,17 +15,19 @@ import birl/duration
 type Entity =
   #(kind.Kind, BitArray)
 
-pub fn encode(doc: List(#(String, bson.Value))) -> BitArray {
+pub fn encode(doc: map.Map(String, bson.Value)) -> BitArray {
   case document(doc) {
     #(_, value) -> value
   }
 }
 
-fn document(doc: List(#(String, bson.Value))) -> Entity {
+fn document(doc: map.Map(String, bson.Value)) -> Entity {
   let doc =
-    doc
-    |> list.map(encode_kv)
-    |> bit_array.concat
+    map.fold(
+      doc,
+      <<>>,
+      fn(acc, key, value) { bit_array.append(acc, encode_kv(#(key, value))) },
+    )
 
   let size = bit_array.byte_size(doc) + 5
   #(
@@ -106,6 +109,7 @@ fn string(value: String) -> Entity {
 fn array(value: List(bson.Value)) -> Entity {
   case
     list.index_map(value, fn(index, item) { #(int.to_string(index), item) })
+    |> map.from_list
     |> document
   {
     #(_, value) -> #(kind.array, value)

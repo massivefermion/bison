@@ -2,4 +2,4 @@
 
 -export([hash/1]).
 
-hash(Data) -> crypto:hash(sha256, Data).
+hash(Binary) -> crypto:hash(sha256, Binary).

@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/map
 import gleam/list
 import gleam/float
 import gleam/bit_array
@@ -12,14 +13,15 @@ import bison/object_id
 import birl
 import birl/duration
 
-pub fn to_canonical(doc: List(#(String, bson.Value))) {
+pub fn to_canonical(doc: map.Map(String, bson.Value)) {
   doc
   |> document
   |> json.to_string
 }
 
-fn document(doc: List(#(String, bson.Value))) {
+fn document(doc: map.Map(String, bson.Value)) {
   doc
+  |> map.to_list
   |> list.map(fn(field) { #(field.0, bson_to_canonical(field.1)) })
   |> json.object
 }

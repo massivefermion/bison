@@ -8,35 +8,35 @@ pub opaque type Generic {
 
 pub fn to_string(generic: Generic) -> Result(String, Nil) {
   case generic {
-    Generic(data) -> bit_array.to_string(data)
+    Generic(binary) -> bit_array.to_string(binary)
   }
 }
 
 pub fn to_int_list(generic: Generic) -> List(Int) {
   case generic {
-    Generic(data) -> to_int_list_internal(data, queue.new())
+    Generic(binary) -> to_int_list_internal(binary, queue.new())
   }
 }
 
 pub fn to_bit_array(generic: Generic) -> BitArray {
   case generic {
-    Generic(data) -> data
+    Generic(binary) -> binary
   }
 }
 
-pub fn from_string(data: String) -> Generic {
-  Generic(bit_array.from_string(data))
+pub fn from_string(binary: String) -> Generic {
+  Generic(bit_array.from_string(binary))
 }
 
-pub fn from_int_list(data: List(Int)) -> Generic {
-  data
+pub fn from_int_list(binary: List(Int)) -> Generic {
+  binary
   |> list.fold(<<>>, fn(acc, code) { bit_array.append(acc, <<code>>) })
   |> Generic
 }
 
-pub fn from_bit_array(data: BitArray) -> Result(Generic, Nil) {
-  case bit_size(data) % 8 {
-    0 -> Ok(Generic(data))
+pub fn from_bit_array(binary: BitArray) -> Result(Generic, Nil) {
+  case bit_size(binary) % 8 {
+    0 -> Ok(Generic(binary))
     _ -> Error(Nil)
   }
 }

@@ -1,4 +1,5 @@
 import gleam/int
+import gleam/map
 import gleam/bool
 import gleam/list
 import gleam/pair
@@ -14,23 +15,23 @@ import bison/object_id
 import birl
 import birl/duration
 
-pub fn decode(data: BitArray) -> Result(List(#(String, bson.Value)), Nil) {
-  case decode_document(data) {
+pub fn decode(binary: BitArray) -> Result(map.Map(String, bson.Value), Nil) {
+  case decode_document(binary) {
     Ok(bson.Document(doc)) -> Ok(doc)
     _ -> Error(Nil)
   }
 }
 
-fn decode_document(data: BitArray) -> Result(bson.Value, Nil) {
-  let total_size = bit_array.byte_size(data)
-  let last_byte = bit_array.slice(data, total_size, -1)
+fn decode_document(binary: BitArray) -> Result(bson.Value, Nil) {
+  let total_size = bit_array.byte_size(binary)
+  let last_byte = bit_array.slice(binary, total_size, -1)
   case last_byte {
     Ok(<<0>>) -> {
-      let <<given_size:32-little-int, rest:bits>> = data
+      let <<given_size:32-little-int, rest:bits>> = binary
       case total_size == given_size {
         True -> {
           use body <- result.then(bit_array.slice(rest, 0, total_size - 4 - 1))
-          use body <- result.then(decode_body(body, []))
+          use body <- result.then(decode_body(body, map.new()))
           body
           |> bson.Document
           |> Ok
@@ -43,13 +44,13 @@ fn decode_document(data: BitArray) -> Result(bson.Value, Nil) {
 }
 
 fn decode_body(
-  data: BitArray,
-  storage: List(#(String, bson.Value)),
-) -> Result(List(#(String, bson.Value)), Nil) {
-  use <- bool.guard(bit_array.byte_size(data) == 0, Ok(storage))
+  binary: BitArray,
+  storage: map.Map(String, bson.Value),
+) -> Result(map.Map(String, bson.Value), Nil) {
+  use <- bool.guard(bit_array.byte_size(binary) == 0, Ok(storage))
 
-  let <<code:8, data:bits>> = data
-  use #(key, rest) <- result.then(consume_till_zero(data, <<>>))
+  let <<code:8, binary:bits>> = binary
+  use #(key, rest) <- result.then(consume_till_zero(binary, <<>>))
   use key <- result.then(bit_array.to_string(key))
 
   case kind.Kind(code: <<code>>) {
@@ -147,7 +148,7 @@ fn decode_body(
 
         k if k == kind.array -> {
           use doc <- result.then(list.try_map(
-            doc,
+            map.to_list(doc),
             fn(item) {
               use first <- result.then(int.parse(item.0))
               Ok(#(first, item.1))
@@ -239,13 +240,13 @@ fn decode_body(
 }
 
 fn consume_till_zero(
-  data: BitArray,
+  binary: BitArray,
   storage: BitArray,
 ) -> Result(#(BitArray, BitArray), Nil) {
-  case bit_array.byte_size(data) {
+  case bit_array.byte_size(binary) {
     0 -> Error(Nil)
     _ -> {
-      let <<ch:8, rest:bits>> = data
+      let <<ch:8, rest:bits>> = binary
       case ch {
         0 -> Ok(#(storage, rest))
         _ -> consume_till_zero(rest, bit_array.append(storage, <<ch>>))
@@ -255,7 +256,7 @@ fn consume_till_zero(
 }
 
 fn recurse_with_new_kv(rest, storage, key, value) {
-  decode_body(rest, list.key_set(storage, key, value))
+  decode_body(rest, map.insert(storage, key, value))
 }
 
 fn decode_boolean(value, rest) {

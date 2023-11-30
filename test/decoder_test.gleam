@@ -6,5 +6,6 @@ pub fn decoder_test() {
   let doc = values.get_doc()
 
   decode(values.bson)
-  |> should.equal(Ok(doc))
+  |> should.be_ok
+  |> should.equal(doc)
 }

@@ -1,4 +1,3 @@
-import gleam/list
 import gleeunit/should
 import values
 import bison/ejson.{from_canonical, to_canonical}
@@ -17,11 +16,6 @@ pub fn decoder_test() {
     from_canonical(values.ejson)
     |> should.be_ok
 
-  list.all(
-    doc,
-    fn(item) {
-      list.any(decoded, fn(decoded_item) { item.0 == decoded_item.0 })
-    },
-  )
-  |> should.be_true
+  decoded
+  |> should.equal(doc)
 }

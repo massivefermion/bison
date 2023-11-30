@@ -1,3 +1,4 @@
+import gleam/map.{type Map}
 import bison/md5.{type MD5}
 import bison/uuid.{type UUID}
 import bison/custom.{type Custom}
@@ -5,7 +6,7 @@ import bison/generic.{type Generic}
 import bison/object_id.{type ObjectId}
 import birl.{type Time}
 
-/// if you're not familiar with type `DateTime`, see [birl](https://hex.pm/packages/birl)!
+/// if you're not familiar with type `Time`, see [birl](https://hex.pm/packages/birl)!
 pub type Value {
   Min
   Max
@@ -25,7 +26,7 @@ pub type Value {
   ObjectId(ObjectId)
   Timestamp(Int, Int)
   Regex(String, String)
-  Document(List(#(String, Value)))
+  Document(Map(String, Value))
 }
 
 pub type Binary {

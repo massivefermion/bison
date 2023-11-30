@@ -240,7 +240,7 @@ fn to_char(digit: Int) -> String {
 fn get_pid() -> List(Int)
 
 @external(erlang, "bison_ffi", "hash")
-fn hash(data: BitArray) -> BitArray
+fn hash(binary: BitArray) -> BitArray
 
 @external(erlang, "inet", "gethostname")
 fn get_hostname() -> Result(BitArray, Nil)

@@ -1,90 +1,56 @@
 import gleam/int
 import gleam/map
+import gleam/list
 import gleam/float
 import gleam/result
-import gleam/option
 import gleam/dynamic
 import gleam/bit_array
-import gleam/json
 import bison/md5
 import bison/bson
 import bison/uuid
 import bison/custom
 import bison/generic
 import bison/object_id
+import juno
 import birl
 import birl/duration
 
 pub fn from_canonical(doc: String) {
-  json.decode(
+  use doc <- result.then(juno.decode_object(
     doc,
-    fn(data) {
-      case dynamic.map(dynamic.string, value)(data) {
-        Ok(map) -> Ok(map.to_list(map))
-        Error(error) -> Error(error)
-      }
-    },
-  )
-}
-
-fn document(dyn) {
-  dynamic.decode1(
-    bson.Document,
-    fn(data) {
-      case dynamic.map(dynamic.string, value)(data) {
-        Ok(map) -> Ok(map.to_list(map))
-        Error(error) -> Error(error)
-      }
-    },
-  )(dyn)
-}
-
-fn value(dyn) {
-  case
-    dynamic.optional(dynamic.any([
-      int,
-      bool,
-      double,
-      min,
-      max,
+    [
       oid,
       date,
-      code,
-      binary,
-      regex,
       timestamp,
+      regex,
+      min,
+      max,
       typed_int,
       typed_long,
       typed_double,
-      string,
-      array,
-      document,
-    ]))(dyn)
-  {
-    Ok(option.Some(value)) -> Ok(value)
-    Ok(option.None) -> Ok(bson.Null)
-    Error(error) -> Error(error)
+      binary,
+      code,
+    ],
+  ))
+  let assert bson.Document(doc) = map_value(doc)
+  Ok(doc)
+}
+
+fn map_value(value) {
+  case value {
+    juno.Null -> bson.Null
+    juno.Custom(value) -> value
+    juno.Int(value) -> bson.Int64(value)
+    juno.Bool(value) -> bson.Boolean(value)
+    juno.Float(value) -> bson.Double(value)
+    juno.String(value) -> bson.String(value)
+    juno.Array(values) -> bson.Array(list.map(values, map_value))
+    juno.Object(value) ->
+      bson.Document(map.from_list(list.map(
+        map.to_list(value),
+        fn(kv) { #(kv.0, map_value(kv.1)) },
+      )))
   }
-}
-
-fn array(dyn) {
-  dynamic.decode1(bson.Array, dynamic.list(value))(dyn)
-}
-
-fn int(dyn) {
-  dynamic.decode1(bson.Int32, dynamic.int)(dyn)
-}
-
-fn double(dyn) {
-  dynamic.decode1(bson.Double, dynamic.float)(dyn)
-}
-
-fn bool(dyn) {
-  dynamic.decode1(bson.Boolean, dynamic.bool)(dyn)
-}
-
-fn string(dyn) {
-  dynamic.decode1(bson.String, dynamic.string)(dyn)
 }
 
 fn code(dyn) {
@@ -133,21 +99,25 @@ fn date(dyn) {
 }
 
 fn timestamp(dyn) {
-  case dynamic.field("$timestamp", document)(dyn) {
-    Ok(bson.Document([#("i", bson.Int32(i)), #("t", bson.Int32(t))])) ->
-      Ok(bson.Timestamp(t, i))
-    _ -> Error([dynamic.DecodeError("timestamp", "not timestamp", [])])
-  }
+  dynamic.decode2(
+    bson.Timestamp,
+    dynamic.field("$timestamp", dynamic.field("t", dynamic.int)),
+    dynamic.field("$timestamp", dynamic.field("i", dynamic.int)),
+  )(dyn)
 }
 
 fn regex(dyn) {
-  case dynamic.field("$regularExpression", document)(dyn) {
-    Ok(bson.Document([
-      #("pattern", bson.String(pattern)),
-      #("options", bson.String(options)),
-    ])) -> Ok(bson.Regex(pattern, options))
-    _ -> Error([dynamic.DecodeError("timestamp", "not timestamp", [])])
-  }
+  dynamic.decode2(
+    bson.Regex,
+    dynamic.field(
+      "$regularExpression",
+      dynamic.field("pattern", dynamic.string),
+    ),
+    dynamic.field(
+      "$regularExpression",
+      dynamic.field("options", dynamic.string),
+    ),
+  )(dyn)
 }
 
 fn min(dyn) {
@@ -224,72 +194,90 @@ fn typed_double(dyn) {
 }
 
 fn binary(dyn) {
-  case dynamic.field("$binary", document)(dyn) {
-    Ok(bson.Document([
-      #("base64", bson.String(base64)),
-      #("subType", bson.String(sub_type)),
-    ])) ->
-      case bit_array.base64_decode(base64) {
-        Ok(decoded) ->
-          case sub_type {
-            "00" ->
-              case generic.from_bit_array(decoded) {
-                Ok(generic) -> Ok(bson.Binary(bson.Generic(generic)))
-                Error(Nil) ->
-                  Error([
-                    dynamic.DecodeError(
-                      "generic binary",
-                      "not generic binary",
-                      [],
-                    ),
-                  ])
-              }
+  dynamic.decode1(
+    bson.Binary,
+    dynamic.field(
+      "$binary",
+      fn(v) {
+        v
+        |> dynamic.map(dynamic.string, dynamic.string)
+        |> result.map(fn(bin_doc) {
+          case [map.get(bin_doc, "base64"), map.get(bin_doc, "subType")] {
+            [Ok(base64), Ok(sub_type)] ->
+              case bit_array.base64_decode(base64) {
+                Ok(decoded) ->
+                  case sub_type {
+                    "00" ->
+                      case generic.from_bit_array(decoded) {
+                        Ok(generic) -> Ok(bson.Generic(generic))
+                        Error(Nil) ->
+                          Error([
+                            dynamic.DecodeError(
+                              "generic binary",
+                              "not generic binary",
+                              [],
+                            ),
+                          ])
+                      }
 
-            "04" ->
-              case uuid.from_bit_array(decoded) {
-                Ok(uuid) -> Ok(bson.Binary(bson.UUID(uuid)))
-                Error(Nil) ->
-                  Error([
-                    dynamic.DecodeError("uuid binary", "not uuid binary", []),
-                  ])
-              }
+                    "04" ->
+                      case uuid.from_bit_array(decoded) {
+                        Ok(uuid) -> Ok(bson.UUID(uuid))
+                        Error(Nil) ->
+                          Error([
+                            dynamic.DecodeError(
+                              "uuid binary",
+                              "not uuid binary",
+                              [],
+                            ),
+                          ])
+                      }
 
-            "05" ->
-              case md5.from_bit_array(decoded) {
-                Ok(md5) -> Ok(bson.Binary(bson.MD5(md5)))
-                Error(Nil) ->
-                  Error([
-                    dynamic.DecodeError("md5 binary", "not md5 binary", []),
-                  ])
-              }
-            _ ->
-              case int.parse(sub_type) {
-                Ok(code) ->
-                  case custom.from_bit_array_with_code(code, decoded) {
-                    Ok(custom) -> Ok(bson.Binary(bson.Custom(custom)))
-                    Error(Nil) ->
-                      Error([
-                        dynamic.DecodeError(
-                          "valid custom binary code",
-                          "invalid custom binary code",
-                          [],
-                        ),
-                      ])
+                    "05" ->
+                      case md5.from_bit_array(decoded) {
+                        Ok(md5) -> Ok(bson.MD5(md5))
+                        Error(Nil) ->
+                          Error([
+                            dynamic.DecodeError(
+                              "md5 binary",
+                              "not md5 binary",
+                              [],
+                            ),
+                          ])
+                      }
+
+                    _ ->
+                      case int.parse(sub_type) {
+                        Ok(code) ->
+                          case custom.from_bit_array_with_code(code, decoded) {
+                            Ok(custom) -> Ok(bson.Custom(custom))
+                            Error(Nil) ->
+                              Error([
+                                dynamic.DecodeError(
+                                  "valid custom binary code",
+                                  "invalid custom binary code",
+                                  [],
+                                ),
+                              ])
+                          }
+
+                        Error(Nil) ->
+                          Error([
+                            dynamic.DecodeError(
+                              "valid custom binary code",
+                              "invalid custom binary code",
+                              [],
+                            ),
+                          ])
+                      }
                   }
 
-                Error(Nil) ->
-                  Error([
-                    dynamic.DecodeError(
-                      "valid custom binary code",
-                      "invalid custom binary code",
-                      [],
-                    ),
-                  ])
+                _ -> Error([dynamic.DecodeError("binary", "not binary", [])])
               }
           }
-
-        Error(Nil) -> Error([dynamic.DecodeError("binary", "not binary", [])])
-      }
-    _ -> Error([dynamic.DecodeError("binary", "not binary", [])])
-  }
+        })
+        |> result.flatten
+      },
+    ),
+  )(dyn)
 }
