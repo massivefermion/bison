@@ -7,9 +7,8 @@ pub opaque type Custom {
 }
 
 pub fn to_bit_array_with_code(custom: Custom) {
-  case custom {
-    Custom(code: <<code>>, value: value) -> #(code, value)
-  }
+  let assert Custom(code: <<code>>, value: value) = custom
+  #(code, value)
 }
 
 pub fn from_bit_array_with_code(code: Int, value: BitArray) {

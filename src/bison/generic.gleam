@@ -45,10 +45,8 @@ fn to_int_list_internal(
   remaining: BitArray,
   storage: queue.Queue(Int),
 ) -> List(Int) {
-  let <<num:8, remaining:bytes>> = remaining
-
+  let assert <<num:8, remaining:bytes>> = remaining
   let new_storage = queue.push_back(storage, num)
-
   case bit_array.byte_size(remaining) == 0 {
     True -> queue.to_list(new_storage)
     False -> to_int_list_internal(remaining, new_storage)

@@ -1,4 +1,4 @@
-import gleam/map
+import gleam/dict
 import bison/bson
 import bison/object_id
 import birl
@@ -25,39 +25,43 @@ pub const bson = <<
 
 pub const ejson = "{\"_id\":{\"$oid\":\"613e0c9717468a6e4bfc646d\"},\"data\":{\"ISBN\":\"0-553-29335-4\",\"author\":{\"active\":[{\"$numberInt\":\"1939\"},{\"$numberInt\":\"1992\"}],\"alive?\":false,\"birthdate\":{\"$date\":{\"$numberLong\":\"-1577750400000\"}},\"height\":{\"$numberDouble\":\"1.75\"},\"name\":\"Isaac Asimov\",\"religion\":null},\"genre\":[\"science fiction\",\"political thriller\"],\"pages\":{\"$numberInt\":\"255\"},\"published\":{\"$numberInt\":\"1951\"},\"title\":\"Foundation\"},\"metadata\":\"bison_test\"}"
 
-pub fn get_doc() -> map.Map(String, bson.Value) {
+pub fn get_doc() -> dict.Dict(String, bson.Value) {
   let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
   let author_birthdate = birl.set_day(birl.unix_epoch, birl.Day(1920, 1, 2))
 
-  map.from_list([
+  dict.from_list([
     #("_id", bson.ObjectId(id)),
     #("metadata", bson.String("bison_test")),
     #(
       "data",
-      bson.Document(map.from_list([
-        #("title", bson.String("Foundation")),
-        #("published", bson.Int32(1951)),
-        #("pages", bson.Int32(255)),
-        #(
-          "genre",
-          bson.Array([
-            bson.String("science fiction"),
-            bson.String("political thriller"),
-          ]),
-        ),
-        #(
-          "author",
-          bson.Document(map.from_list([
-            #("name", bson.String("Isaac Asimov")),
-            #("birthdate", bson.DateTime(author_birthdate)),
-            #("alive?", bson.Boolean(False)),
-            #("active", bson.Array([bson.Int32(1939), bson.Int32(1992)])),
-            #("height", bson.Double(1.75)),
-            #("religion", bson.Null),
-          ])),
-        ),
-        #("ISBN", bson.String("0-553-29335-4")),
-      ])),
+      bson.Document(
+        dict.from_list([
+          #("title", bson.String("Foundation")),
+          #("published", bson.Int32(1951)),
+          #("pages", bson.Int32(255)),
+          #(
+            "genre",
+            bson.Array([
+              bson.String("science fiction"),
+              bson.String("political thriller"),
+            ]),
+          ),
+          #(
+            "author",
+            bson.Document(
+              dict.from_list([
+                #("name", bson.String("Isaac Asimov")),
+                #("birthdate", bson.DateTime(author_birthdate)),
+                #("alive?", bson.Boolean(False)),
+                #("active", bson.Array([bson.Int32(1939), bson.Int32(1992)])),
+                #("height", bson.Double(1.75)),
+                #("religion", bson.Null),
+              ]),
+            ),
+          ),
+          #("ISBN", bson.String("0-553-29335-4")),
+        ]),
+      ),
     ),
   ])
 }

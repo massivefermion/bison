@@ -35,7 +35,7 @@ gleam add bison
 ### Encoding
 
 ```gleam
-import gleam/map
+import gleam/dict
 import gleam/list
 import gleam/result
 import bison
@@ -57,7 +57,7 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
     #("checksum", bson.Binary(bson.MD5(checksum))),
     #("nicknames", bson.Array(list.map(calf.nicknames, bson.String))),
   ]
-  |> map.from_list
+  |> dict.from_list
   |> bison.encode
   |> Ok
 }
@@ -66,7 +66,7 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
 ### Decoding
 
 ```gleam
-import gleam/map
+import gleam/dict
 import gleam/list
 import gleam/result
 import bison
@@ -79,14 +79,14 @@ fn calf_from_bson(binary: BitArray) -> Result(Calf, Nil) {
 
   case
     [
-      map.get(doc, "id"),
-      map.get(doc, "age"),
-      map.get(doc, "name"),
-      map.get(doc, "weight"),
-      map.get(doc, "nicknames"),
-      map.get(doc, "birthdate"),
-      map.get(doc, "is_healthy"),
-      map.get(doc, "checksum"),
+      dict.get(doc, "id"),
+      dict.get(doc, "age"),
+      dict.get(doc, "name"),
+      dict.get(doc, "weight"),
+      dict.get(doc, "nicknames"),
+      dict.get(doc, "birthdate"),
+      dict.get(doc, "is_healthy"),
+      dict.get(doc, "checksum"),
     ]
   {
     [

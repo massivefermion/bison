@@ -37,7 +37,7 @@ pub fn from_string(md5: String) -> Result(MD5, Nil) {
           codes
           |> list.sized_chunk(2)
           |> list.map(fn(pair) {
-            let [high, low] = pair
+            let assert [high, low] = pair
             <<high:4, low:4>>
           })
           |> bit_array.concat
@@ -53,18 +53,14 @@ pub fn from_int_list(md5: List(Int)) -> Result(MD5, Nil) {
   case list.length(md5) {
     16 ->
       case
-        list.try_fold(
-          md5,
-          <<>>,
-          fn(acc, code) {
-            case code >= 0 && code <= 255 {
-              True ->
-                bit_array.append(acc, <<code>>)
-                |> Ok
-              False -> Error(Nil)
-            }
-          },
-        )
+        list.try_fold(md5, <<>>, fn(acc, code) {
+          case code >= 0 && code <= 255 {
+            True ->
+              bit_array.append(acc, <<code>>)
+              |> Ok
+            False -> Error(Nil)
+          }
+        })
       {
         Ok(md5) -> Ok(MD5(md5))
         Error(Nil) -> Error(Nil)
@@ -72,22 +68,19 @@ pub fn from_int_list(md5: List(Int)) -> Result(MD5, Nil) {
 
     32 ->
       case
-        list.try_map(
-          md5,
-          fn(code) {
-            case code >= 0 && code <= 15 {
-              True -> Ok(code)
-              False -> Error(Nil)
-            }
-          },
-        )
+        list.try_map(md5, fn(code) {
+          case code >= 0 && code <= 15 {
+            True -> Ok(code)
+            False -> Error(Nil)
+          }
+        })
       {
         Ok(codes) ->
           codes
           |> list.sized_chunk(2)
           |> list.map(fn(pair) {
-            let [high, low] = pair
-            let <<num:8>> = <<high:4, low:4>>
+            let assert [high, low] = pair
+            let assert <<num:8>> = <<high:4, low:4>>
             num
           })
           |> list.fold(<<>>, fn(acc, code) { bit_array.append(acc, <<code>>) })
@@ -108,7 +101,7 @@ pub fn from_bit_array(md5: BitArray) -> Result(MD5, Nil) {
 }
 
 fn to_string_internal(remaining: BitArray, storage: String) -> String {
-  let <<high:4, low:4, remaining:bytes>> = remaining
+  let assert <<high:4, low:4, remaining:bytes>> = remaining
 
   let new_storage =
     storage
@@ -125,10 +118,8 @@ fn to_int_list_internal(
   remaining: BitArray,
   storage: queue.Queue(Int),
 ) -> List(Int) {
-  let <<num:8, remaining:bytes>> = remaining
-
+  let assert <<num:8, remaining:bytes>> = remaining
   let new_storage = queue.push_back(storage, num)
-
   case bit_array.byte_size(remaining) {
     0 -> queue.to_list(new_storage)
     _ -> to_int_list_internal(remaining, new_storage)
@@ -136,16 +127,16 @@ fn to_int_list_internal(
 }
 
 fn to_digit(char: String) -> Result(Int, Nil) {
-  let <<code>> = bit_array.from_string(char)
+  let assert <<code>> = bit_array.from_string(char)
 
   case code {
     code if code >= 48 && code <= 57 -> {
-      let <<_:4, num:4>> = bit_array.from_string(char)
+      let assert <<_:4, num:4>> = bit_array.from_string(char)
       Ok(num)
     }
 
     code if code >= 65 && code <= 70 || code >= 97 && code <= 102 -> {
-      let <<_:5, additive:3>> = bit_array.from_string(char)
+      let assert <<_:5, additive:3>> = bit_array.from_string(char)
       Ok(9 + additive)
     }
 

@@ -23,7 +23,7 @@ pub fn from_datetime(datetime: birl.Time) -> ObjectId {
   let assert Ok(counter) = int.modulo(birl.monotonic_now(), 0xffffff)
 
   let assert Ok(hostname) = get_hostname()
-  let <<machine_id:size(24), _:bits>> = hash(hostname)
+  let assert <<machine_id:size(24), _:bits>> = hash(hostname)
 
   let assert Ok(string_pid) =
     get_pid()
@@ -41,9 +41,8 @@ pub fn from_datetime(datetime: birl.Time) -> ObjectId {
 
 /// see [birl](https://hex.pm/packages/birl)!
 pub fn to_datetime(id: ObjectId) -> birl.Time {
-  case id {
-    ObjectId(<<timestamp:big-32, _:bits>>) -> birl.from_unix(timestamp)
-  }
+  let assert ObjectId(<<timestamp:big-32, _:bits>>) = id
+  birl.from_unix(timestamp)
 }
 
 /// can be used to create a time range starting from time `a` with step `s`,
@@ -60,8 +59,10 @@ pub fn range(
 }
 
 pub fn compare(a: ObjectId, b: ObjectId) -> order.Order {
-  let ObjectId(<<moment_a:big-32, _:big-24, _:big-16, counter_a:big-24>>) = a
-  let ObjectId(<<moment_b:big-32, _:big-24, _:big-16, counter_b:big-24>>) = b
+  let assert ObjectId(<<moment_a:big-32, _:big-24, _:big-16, counter_a:big-24>>) =
+    a
+  let assert ObjectId(<<moment_b:big-32, _:big-24, _:big-16, counter_b:big-24>>) =
+    b
 
   case moment_a == moment_b {
     True ->
@@ -111,7 +112,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
           codes
           |> list.sized_chunk(2)
           |> list.map(fn(pair) {
-            let [high, low] = pair
+            let assert [high, low] = pair
             <<high:4, low:4>>
           })
           |> bit_array.concat
@@ -127,18 +128,14 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
   case list.length(id) {
     12 ->
       case
-        list.try_fold(
-          id,
-          <<>>,
-          fn(acc, code) {
-            case code >= 0 && code <= 255 {
-              True ->
-                bit_array.append(acc, <<code>>)
-                |> Ok
-              False -> Error(Nil)
-            }
-          },
-        )
+        list.try_fold(id, <<>>, fn(acc, code) {
+          case code >= 0 && code <= 255 {
+            True ->
+              bit_array.append(acc, <<code>>)
+              |> Ok
+            False -> Error(Nil)
+          }
+        })
       {
         Ok(id) -> Ok(ObjectId(id))
         Error(Nil) -> Error(Nil)
@@ -146,22 +143,19 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
 
     24 ->
       case
-        list.try_map(
-          id,
-          fn(code) {
-            case code >= 0 && code <= 15 {
-              True -> Ok(code)
-              False -> Error(Nil)
-            }
-          },
-        )
+        list.try_map(id, fn(code) {
+          case code >= 0 && code <= 15 {
+            True -> Ok(code)
+            False -> Error(Nil)
+          }
+        })
       {
         Ok(codes) ->
           codes
           |> list.sized_chunk(2)
           |> list.map(fn(pair) {
-            let [high, low] = pair
-            let <<num:8>> = <<high:4, low:4>>
+            let assert [high, low] = pair
+            let assert <<num:8>> = <<high:4, low:4>>
             num
           })
           |> list.fold(<<>>, fn(acc, code) { bit_array.append(acc, <<code>>) })
@@ -182,7 +176,7 @@ pub fn from_bit_array(id: BitArray) -> Result(ObjectId, Nil) {
 }
 
 fn to_string_internal(remaining: BitArray, storage: String) -> String {
-  let <<high:4, low:4, remaining:bytes>> = remaining
+  let assert <<high:4, low:4, remaining:bytes>> = remaining
 
   let new_storage =
     storage
@@ -199,7 +193,7 @@ fn to_int_list_internal(
   remaining: BitArray,
   storage: queue.Queue(Int),
 ) -> List(Int) {
-  let <<num:8, remaining:bytes>> = remaining
+  let assert <<num:8, remaining:bytes>> = remaining
 
   let new_storage = queue.push_back(storage, num)
 
@@ -210,16 +204,16 @@ fn to_int_list_internal(
 }
 
 fn to_digit(char: String) -> Result(Int, Nil) {
-  let <<code>> = bit_array.from_string(char)
+  let assert <<code>> = bit_array.from_string(char)
 
   case code {
     code if code >= 48 && code <= 57 -> {
-      let <<_:4, num:4>> = bit_array.from_string(char)
+      let assert <<_:4, num:4>> = bit_array.from_string(char)
       Ok(num)
     }
 
     code if code >= 65 && code <= 70 || code >= 97 && code <= 102 -> {
-      let <<_:5, additive:3>> = bit_array.from_string(char)
+      let assert <<_:5, additive:3>> = bit_array.from_string(char)
       Ok(9 + additive)
     }
 

@@ -1,4 +1,4 @@
-import gleam/map.{type Map}
+import gleam/dict.{type Dict}
 import bison/md5.{type MD5}
 import bison/uuid.{type UUID}
 import bison/custom.{type Custom}
@@ -26,7 +26,7 @@ pub type Value {
   ObjectId(ObjectId)
   Timestamp(Int, Int)
   Regex(String, String)
-  Document(Map(String, Value))
+  Document(Dict(String, Value))
 }
 
 pub type Binary {

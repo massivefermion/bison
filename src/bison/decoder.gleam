@@ -1,5 +1,5 @@
 import gleam/int
-import gleam/map
+import gleam/dict
 import gleam/bool
 import gleam/list
 import gleam/pair
@@ -15,7 +15,7 @@ import bison/object_id
 import birl
 import birl/duration
 
-pub fn decode(binary: BitArray) -> Result(map.Map(String, bson.Value), Nil) {
+pub fn decode(binary: BitArray) -> Result(dict.Dict(String, bson.Value), Nil) {
   case decode_document(binary) {
     Ok(bson.Document(doc)) -> Ok(doc)
     _ -> Error(Nil)
@@ -27,11 +27,11 @@ fn decode_document(binary: BitArray) -> Result(bson.Value, Nil) {
   let last_byte = bit_array.slice(binary, total_size, -1)
   case last_byte {
     Ok(<<0>>) -> {
-      let <<given_size:32-little-int, rest:bits>> = binary
+      let assert <<given_size:32-little-int, rest:bits>> = binary
       case total_size == given_size {
         True -> {
           use body <- result.then(bit_array.slice(rest, 0, total_size - 4 - 1))
-          use body <- result.then(decode_body(body, map.new()))
+          use body <- result.then(decode_body(body, dict.new()))
           body
           |> bson.Document
           |> Ok
@@ -45,11 +45,11 @@ fn decode_document(binary: BitArray) -> Result(bson.Value, Nil) {
 
 fn decode_body(
   binary: BitArray,
-  storage: map.Map(String, bson.Value),
-) -> Result(map.Map(String, bson.Value), Nil) {
+  storage: dict.Dict(String, bson.Value),
+) -> Result(dict.Dict(String, bson.Value), Nil) {
   use <- bool.guard(bit_array.byte_size(binary) == 0, Ok(storage))
 
-  let <<code:8, binary:bits>> = binary
+  let assert <<code:8, binary:bits>> = binary
   use #(key, rest) <- result.then(consume_till_zero(binary, <<>>))
   use key <- result.then(bit_array.to_string(key))
 
@@ -59,40 +59,43 @@ fn decode_body(
     k if k == kind.null -> recurse_with_new_kv(rest, storage, key, bson.Null)
 
     k if k == kind.int32 -> {
-      let <<value:32-little-signed, rest:bits>> = rest
+      let assert <<value:32-little-signed, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Int32(value))
     }
 
     k if k == kind.int64 -> {
-      let <<value:64-little-signed, rest:bits>> = rest
+      let assert <<value:64-little-signed, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Int64(value))
     }
 
     k if k == kind.double -> {
-      let <<value:little-float, rest:bits>> = rest
+      let assert <<value:little-float, rest:bits>> = rest
       recurse_with_new_kv(rest, storage, key, bson.Double(value))
     }
 
     k if k == kind.timestamp -> {
-      let <<counter:32-little-unsigned, stamp:32-little-unsigned, rest:bits>> =
-        rest
+      let assert <<
+        counter:32-little-unsigned,
+        stamp:32-little-unsigned,
+        rest:bits,
+      >> = rest
       recurse_with_new_kv(rest, storage, key, bson.Timestamp(stamp, counter))
     }
 
     k if k == kind.object_id -> {
-      let <<value:96-bits, rest:bits>> = rest
+      let assert <<value:96-bits, rest:bits>> = rest
       use oid <- result.then(object_id.from_bit_array(value))
       recurse_with_new_kv(rest, storage, key, bson.ObjectId(oid))
     }
 
     k if k == kind.boolean -> {
-      let <<value:8, rest:bits>> = rest
+      let assert <<value:8, rest:bits>> = rest
       use value <- decode_boolean(value)
       recurse_with_new_kv(rest, storage, key, bson.Boolean(value))
     }
 
     k if k == kind.datetime -> {
-      let <<value:64-little-signed, rest:bits>> = rest
+      let assert <<value:64-little-signed, rest:bits>> = rest
       let value =
         birl.add(
           birl.unix_epoch,
@@ -110,7 +113,7 @@ fn decode_body(
     }
 
     k if k == kind.string -> {
-      let <<given_size:32-little-int, rest:bits>> = rest
+      let assert <<given_size:32-little-int, rest:bits>> = rest
       use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
       case given_size == str_size + 1 {
@@ -123,7 +126,7 @@ fn decode_body(
     }
 
     k if k == kind.js -> {
-      let <<given_size:32-little-int, rest:bits>> = rest
+      let assert <<given_size:32-little-int, rest:bits>> = rest
       use #(str, rest) <- result.then(consume_till_zero(rest, <<>>))
       let str_size = bit_array.byte_size(str)
       case given_size == str_size + 1 {
@@ -136,7 +139,7 @@ fn decode_body(
     }
 
     k if k == kind.document || k == kind.array -> {
-      let <<doc_size:32-little-int, _:bits>> = rest
+      let assert <<doc_size:32-little-int, _:bits>> = rest
       use doc <- result.then(bit_array.slice(rest, 0, doc_size))
       use doc <- result.then(decode_document(doc))
       let assert bson.Document(doc) = doc
@@ -147,13 +150,12 @@ fn decode_body(
           |> Ok
 
         k if k == kind.array -> {
-          use doc <- result.then(list.try_map(
-            map.to_list(doc),
-            fn(item) {
+          use doc <- result.then(
+            list.try_map(dict.to_list(doc), fn(item) {
               use first <- result.then(int.parse(item.0))
               Ok(#(first, item.1))
-            },
-          ))
+            }),
+          )
           doc
           |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
           |> list.map(pair.second)
@@ -172,9 +174,9 @@ fn decode_body(
     }
 
     k if k == kind.binary -> {
-      let <<byte_size:32-little-int, sub_code:8, rest:bits>> = rest
+      let assert <<byte_size:32-little-int, sub_code:8, rest:bits>> = rest
       let given_size = byte_size * 8
-      let <<value:size(given_size)-bits, rest:bits>> = rest
+      let assert <<value:size(given_size)-bits, rest:bits>> = rest
       case kind.SubKind(code: <<sub_code>>) {
         sub_kind if sub_kind == kind.generic -> {
           use value <- result.then(generic.from_bit_array(value))
@@ -246,7 +248,7 @@ fn consume_till_zero(
   case bit_array.byte_size(binary) {
     0 -> Error(Nil)
     _ -> {
-      let <<ch:8, rest:bits>> = binary
+      let assert <<ch:8, rest:bits>> = binary
       case ch {
         0 -> Ok(#(storage, rest))
         _ -> consume_till_zero(rest, bit_array.append(storage, <<ch>>))
@@ -256,7 +258,7 @@ fn consume_till_zero(
 }
 
 fn recurse_with_new_kv(rest, storage, key, value) {
-  decode_body(rest, map.insert(storage, key, value))
+  decode_body(rest, dict.insert(storage, key, value))
 }
 
 fn decode_boolean(value, rest) {
