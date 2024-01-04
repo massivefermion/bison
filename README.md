@@ -63,7 +63,55 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
 }
 ```
 
-### Decoding
+### Strict Decoding
+
+```gleam
+import gleam/dict
+import gleam/dynamic
+import bison
+import bison/bson
+import bison/decoders
+
+pub type Habitat {
+  Habitat(kind: String, location: String)
+}
+
+pub type Species {
+  Species(alternative_name: String, weight_range: List(Int), habitat: Habitat)
+}
+
+pub type ExtantBisons {
+  ExtantBisons(buffalo: Species, wisent: Species)
+}
+
+pub fn extant_bisons_from_bson(binary: BitArray) -> Result(ExtantBisons, List(dynamic.DecodeError)) {
+  let habitat_decoder =
+    dynamic.decode2(
+      Habitat,
+      dynamic.field("kind", decoders.string),
+      dynamic.field("location", decoders.string),
+    )
+
+  let species_decoder =
+    dynamic.decode3(
+      Species,
+      dynamic.field("alternative name", decoders.string),
+      dynamic.field("weight range", decoders.list(decoders.int)),
+      dynamic.field("habitat", decoders.wrap(habitat_decoder)),
+    )
+
+  let decoder =
+    dynamic.decode2(
+      ExtantBisons,
+      dynamic.field("Buffalo", decoders.wrap(species_decoder)),
+      dynamic.field("Wisent", decoders.wrap(species_decoder)),
+    )
+    
+  bison.strict_decode(binary, decoder)
+}
+```
+
+### Dict Decoding
 
 ```gleam
 import gleam/dict

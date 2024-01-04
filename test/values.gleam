@@ -1,5 +1,7 @@
 import gleam/dict
+import gleam/dynamic
 import bison/bson
+import bison/decoders
 import bison/object_id
 import birl
 
@@ -64,4 +66,79 @@ pub fn get_doc() -> dict.Dict(String, bson.Value) {
       ),
     ),
   ])
+}
+
+pub type Author {
+  Author(
+    name: String,
+    birthdate: birl.Time,
+    alive: Bool,
+    active: List(Int),
+    height: Float,
+    religion: Nil,
+  )
+}
+
+pub type Novel {
+  Novel(
+    title: String,
+    published: Int,
+    pages: Int,
+    genre: List(String),
+    isbn: String,
+    author: Author,
+  )
+}
+
+pub type Doc {
+  Doc(id: object_id.ObjectId, metadata: String, novel: Novel)
+}
+
+pub fn get_decoder() {
+  let author_decoder =
+    dynamic.decode6(
+      Author,
+      dynamic.field("name", decoders.string),
+      dynamic.field("birthdate", decoders.time),
+      dynamic.field("alive?", decoders.bool),
+      dynamic.field("active", decoders.list(decoders.int)),
+      dynamic.field("height", decoders.float),
+      dynamic.field("religion", decoders.nil),
+    )
+
+  let novel_decoder =
+    dynamic.decode6(
+      Novel,
+      dynamic.field("title", decoders.string),
+      dynamic.field("published", decoders.int),
+      dynamic.field("pages", decoders.int),
+      dynamic.field("genre", decoders.list(decoders.string)),
+      dynamic.field("ISBN", decoders.string),
+      dynamic.field("author", decoders.wrap(author_decoder)),
+    )
+
+  dynamic.decode3(
+    Doc,
+    dynamic.field("_id", decoders.object_id),
+    dynamic.field("metadata", decoders.string),
+    dynamic.field("data", decoders.wrap(novel_decoder)),
+  )
+}
+
+pub fn get_typed_doc() {
+  let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
+  let author_birthdate = birl.set_day(birl.unix_epoch, birl.Day(1920, 1, 2))
+
+  Doc(
+    id,
+    "bison_test",
+    Novel(
+      "Foundation",
+      1951,
+      255,
+      ["science fiction", "political thriller"],
+      "0-553-29335-4",
+      Author("Isaac Asimov", author_birthdate, False, [1939, 1992], 1.75, Nil),
+    ),
+  )
 }
