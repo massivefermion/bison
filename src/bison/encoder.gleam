@@ -21,10 +21,30 @@ pub fn encode(doc: dict.Dict(String, bson.Value)) -> BitArray {
   }
 }
 
+pub fn encode_list(doc: List(#(String, bson.Value))) -> BitArray {
+  case document_from_list(doc) {
+    #(_, value) -> value
+  }
+}
+
 fn document(doc: dict.Dict(String, bson.Value)) -> Entity {
   let doc =
     dict.fold(doc, <<>>, fn(acc, key, value) {
       bit_array.append(acc, encode_kv(#(key, value)))
+    })
+
+  let size = bit_array.byte_size(doc) + 5
+  #(
+    kind.document,
+    [<<size:32-little>>, doc, <<0>>]
+    |> bit_array.concat,
+  )
+}
+
+fn document_from_list(doc: List(#(String, bson.Value))) -> Entity {
+  let doc =
+    list.fold(doc, <<>>, fn(acc, kv) {
+      bit_array.append(acc, encode_kv(#(kv.0, kv.1)))
     })
 
   let size = bit_array.byte_size(doc) + 5
