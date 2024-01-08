@@ -12,9 +12,6 @@ import bison/object_id
 import birl
 import birl/duration
 
-type Entity =
-  #(kind.Kind, BitArray)
-
 pub fn encode(doc: dict.Dict(String, bson.Value)) -> BitArray {
   case document(doc) {
     #(_, value) -> value
@@ -26,6 +23,9 @@ pub fn encode_list(doc: List(#(String, bson.Value))) -> BitArray {
     #(_, value) -> value
   }
 }
+
+type Entity =
+  #(kind.Kind, BitArray)
 
 fn document(doc: dict.Dict(String, bson.Value)) -> Entity {
   let doc =
@@ -66,8 +66,6 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Infinity -> infinity()
     bson.JS(value) -> js(value)
     bson.Array(value) -> array(value)
-    bson.Int32(value) -> int32(value)
-    bson.Int64(value) -> int64(value)
     bson.Double(value) -> double(value)
     bson.String(value) -> string(value)
     bson.Boolean(value) -> boolean(value)
@@ -81,6 +79,8 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Binary(bson.Generic(value)) -> generic(value)
     bson.Regex(pattern, options) -> regex(pattern, options)
     bson.Timestamp(stamp, counter) -> timestamp(stamp, counter)
+    bson.Int32(value) -> int(value, int32, kind.int32_min, kind.int32_max)
+    bson.Int64(value) -> int(value, int64, kind.int64_min, kind.int64_max)
   }
 
   case value {
@@ -134,15 +134,25 @@ fn array(value: List(bson.Value)) -> Entity {
   }
 }
 
-fn double(value: Float) -> Entity {
-  #(kind.double, <<value:little-float>>)
-}
-
 fn boolean(value: Bool) -> Entity {
   case value {
     True -> #(kind.boolean, <<1>>)
     False -> #(kind.boolean, <<0>>)
   }
+}
+
+fn int(value: Int, encode_int: fn(Int) -> Entity, min: Int, max: Int) -> Entity {
+  case value >= min && value <= max {
+    True -> encode_int(value)
+    False ->
+      value
+      |> int.to_float
+      |> double
+  }
+}
+
+fn double(value: Float) -> Entity {
+  #(kind.double, <<value:little-float>>)
 }
 
 fn int32(value: Int) -> Entity {

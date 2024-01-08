@@ -1,11 +1,14 @@
 import gleeunit/should
 import values
-import bison.{strict_decode}
+import bison.{decode, to_custom_type}
 
 pub fn decoder_test() {
   let typed_doc = values.get_typed_doc()
 
-  strict_decode(values.bson, values.get_decoder())
+  values.bson
+  |> decode
+  |> should.be_ok
+  |> to_custom_type(values.get_decoder())
   |> should.be_ok
   |> should.equal(typed_doc)
 }

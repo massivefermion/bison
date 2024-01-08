@@ -1,5 +1,6 @@
-import gleam/result
+import gleam/dict
 import gleam/dynamic
+import bison/bson
 import bison/encoder
 import bison/decoder
 
@@ -15,12 +16,10 @@ pub fn decode(binary) {
   decoder.decode(binary)
 }
 
-pub fn strict_decode(binary, decoder) {
-  use doc <- result.then(
-    decoder.decode(binary)
-    |> result.replace_error([dynamic.DecodeError("BSON", "bit array", [])]),
-  )
-
+pub fn to_custom_type(
+  doc: dict.Dict(String, bson.Value),
+  decoder: dynamic.Decoder(a),
+) {
   doc
   |> dynamic.from
   |> decoder

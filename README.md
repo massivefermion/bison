@@ -63,10 +63,11 @@ fn calf_to_bson(calf: Calf) -> Result(BitArray, Nil) {
 }
 ```
 
-### Strict Decoding
+### Decoding
 
 ```gleam
 import gleam/dict
+import gleam/result
 import gleam/dynamic
 import bison
 import bison/bson
@@ -84,7 +85,9 @@ pub type ExtantBisons {
   ExtantBisons(buffalo: Species, wisent: Species)
 }
 
-pub fn extant_bisons_from_bson(binary: BitArray) -> Result(ExtantBisons, List(dynamic.DecodeError)) {
+pub fn extant_bisons_from_bson(
+  binary: BitArray,
+) -> Result(ExtantBisons, List(dynamic.DecodeError)) {
   let habitat_decoder =
     dynamic.decode2(
       Habitat,
@@ -106,65 +109,12 @@ pub fn extant_bisons_from_bson(binary: BitArray) -> Result(ExtantBisons, List(dy
       dynamic.field("Buffalo", decoders.wrap(species_decoder)),
       dynamic.field("Wisent", decoders.wrap(species_decoder)),
     )
-    
-  bison.strict_decode(binary, decoder)
-}
-```
 
-### Dict Decoding
+  use doc <- result.then(
+    bison.decode(binary)
+    |> result.replace_error([dynamic.DecodeError("BSON", "bit array", [])]),
+  )
 
-```gleam
-import gleam/dict
-import gleam/list
-import gleam/result
-import bison
-import bison/md5
-import bison/bson
-import bison/object_id
-
-fn calf_from_bson(binary: BitArray) -> Result(Calf, Nil) {
-  use doc <- result.then(bison.decode(binary))
-
-  case
-    [
-      dict.get(doc, "id"),
-      dict.get(doc, "age"),
-      dict.get(doc, "name"),
-      dict.get(doc, "weight"),
-      dict.get(doc, "nicknames"),
-      dict.get(doc, "birthdate"),
-      dict.get(doc, "is_healthy"),
-      dict.get(doc, "checksum"),
-    ]
-  {
-    [
-      Ok(bson.ObjectId(id)),
-      Ok(bson.Int32(age)),
-      Ok(bson.String(name)),
-      Ok(bson.Double(weight)),
-      Ok(bson.Array(nicknames)),
-      Ok(bson.DateTime(birthdate)),
-      Ok(bson.Boolean(is_healthy)),
-      Ok(bson.Binary(bson.MD5(checksum))),
-    ] ->
-      Ok(Calf(
-        id: object_id.to_string(id),
-        age: age,
-        name: name,
-        weight: weight,
-        nicknames: list.map(
-          nicknames,
-          fn(n) {
-            let assert bson.String(n) = n
-            n
-          },
-        ),
-        birthdate: birthdate,
-        is_healthy: is_healthy,
-        checksum: md5.to_string(checksum),
-      ))
-
-    _ -> Error(Nil)
-  }
+  bison.to_custom_type(doc, decoder)
 }
 ```
