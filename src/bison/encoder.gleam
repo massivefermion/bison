@@ -58,7 +58,7 @@ fn document_from_list(doc: List(#(String, bson.Value))) -> Entity {
 fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
   let key = <<pair.0:utf8, 0>>
 
-  let value = case pair.1 {
+  let #(kind, value) = case pair.1 {
     bson.NaN -> nan()
     bson.Min -> min()
     bson.Max -> max()
@@ -83,11 +83,8 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Int64(value) -> int(value, int64, kind.int64_min, kind.int64_max)
   }
 
-  case value {
-    #(kind, value) ->
-      [kind.code, key, value]
-      |> bit_array.concat
-  }
+  [kind.code, key, value]
+  |> bit_array.concat
 }
 
 fn null() -> Entity {
