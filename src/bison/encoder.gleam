@@ -65,6 +65,8 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Null -> null()
     bson.Infinity -> infinity()
     bson.JS(value) -> js(value)
+    bson.Int32(value) -> int32(value)
+    bson.Int64(value) -> int64(value)
     bson.Array(value) -> array(value)
     bson.Double(value) -> double(value)
     bson.String(value) -> string(value)
@@ -79,8 +81,6 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Binary(bson.Generic(value)) -> generic(value)
     bson.Regex(pattern, options) -> regex(pattern, options)
     bson.Timestamp(stamp, counter) -> timestamp(stamp, counter)
-    bson.Int32(value) -> int(value, int32, kind.int32_min, kind.int32_max)
-    bson.Int64(value) -> int(value, int64, kind.int64_min, kind.int64_max)
   }
 
   [kind.code, key, value]
@@ -138,26 +138,25 @@ fn boolean(value: Bool) -> Entity {
   }
 }
 
-fn int(value: Int, encode_int: fn(Int) -> Entity, min: Int, max: Int) -> Entity {
-  case value >= min && value <= max {
-    True -> encode_int(value)
-    False ->
-      value
-      |> int.to_float
-      |> double
-  }
-}
-
 fn double(value: Float) -> Entity {
   #(kind.double, <<value:little-float>>)
 }
 
 fn int32(value: Int) -> Entity {
-  #(kind.int32, <<value:32-little>>)
+  case value >= kind.int32_min && value <= kind.int32_max {
+    True -> #(kind.int32, <<value:32-little>>)
+    False -> int64(value)
+  }
 }
 
 fn int64(value: Int) -> Entity {
-  #(kind.int64, <<value:64-little>>)
+  case value >= kind.int64_min && value <= kind.int64_max {
+    True -> #(kind.int64, <<value:64-little>>)
+    False ->
+      value
+      |> int.to_float
+      |> double
+  }
 }
 
 fn datetime(value: birl.Time) -> Entity {
