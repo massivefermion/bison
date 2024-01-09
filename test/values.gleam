@@ -1,5 +1,6 @@
 import gleam/dict
 import gleam/dynamic
+import gleeunit/should
 import bison/bson
 import bison/decoders
 import bison/object_id
@@ -28,7 +29,10 @@ pub const bson = <<
 pub const ejson = "{\"_id\":{\"$oid\":\"613e0c9717468a6e4bfc646d\"},\"data\":{\"ISBN\":\"0-553-29335-4\",\"author\":{\"active\":[{\"$numberInt\":\"1939\"},{\"$numberInt\":\"1992\"}],\"alive?\":false,\"birthdate\":{\"$date\":{\"$numberLong\":\"-1577750400000\"}},\"height\":{\"$numberDouble\":\"1.75\"},\"name\":\"Isaac Asimov\",\"religion\":null},\"genre\":[\"science fiction\",\"political thriller\"],\"pages\":{\"$numberInt\":\"255\"},\"published\":{\"$numberInt\":\"1951\"},\"title\":\"Foundation\"},\"metadata\":\"bison_test\"}"
 
 pub fn get_doc() -> dict.Dict(String, bson.Value) {
-  let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
+  let id =
+    object_id.from_string("613e0c9717468a6e4bfc646d")
+    |> should.be_ok
+
   let author_birthdate = birl.set_day(birl.unix_epoch, birl.Day(1920, 1, 2))
 
   dict.from_list([
@@ -126,7 +130,10 @@ pub fn get_decoder() {
 }
 
 pub fn get_typed_doc() {
-  let assert Ok(id) = object_id.from_string("613e0c9717468a6e4bfc646d")
+  let id =
+    object_id.from_string("613e0c9717468a6e4bfc646d")
+    |> should.be_ok
+
   let author_birthdate = birl.set_day(birl.unix_epoch, birl.Day(1920, 1, 2))
 
   Doc(

@@ -22,18 +22,10 @@ pub fn from_datetime(datetime: birl.Time) -> ObjectId {
   let moment = birl.to_unix(datetime)
   let assert Ok(counter) = int.modulo(birl.monotonic_now(), 0xffffff)
 
-  let assert Ok(hostname) = get_hostname()
-  let assert <<machine_id:size(24), _:bits>> = hash(hostname)
-
-  let assert Ok(string_pid) =
-    get_pid()
-    |> list.fold(<<>>, fn(acc, c) { <<acc:bits, c>> })
-    |> bit_array.to_string
-
-  let assert Ok(pid) = int.parse(string_pid)
+  let assert <<machine_id:size(24), _:bits>> = hash(get_hostname())
 
   let assert Ok(id) =
-    <<moment:big-32, machine_id:big-24, pid:big-16, counter:big-24>>
+    <<moment:big-32, machine_id:big-24, get_pid():big-16, counter:big-24>>
     |> from_bit_array
 
   id
@@ -230,11 +222,11 @@ fn to_char(digit: Int) -> String {
   digit
 }
 
-@external(erlang, "os", "getpid")
-fn get_pid() -> List(Int)
+@external(erlang, "bison_ffi", "get_pid")
+fn get_pid() -> Int
 
 @external(erlang, "bison_ffi", "hash")
 fn hash(binary: BitArray) -> BitArray
 
-@external(erlang, "inet", "gethostname")
-fn get_hostname() -> Result(BitArray, Nil)
+@external(erlang, "bison_ffi", "get_hostname")
+fn get_hostname() -> BitArray
