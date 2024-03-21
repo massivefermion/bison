@@ -46,6 +46,7 @@ pub fn from_string(uuid: String) -> Result(UUID, Nil) {
           |> Ok
         Error(Nil) -> Error(Nil)
       }
+
     _ -> Error(Nil)
   }
 }
@@ -56,9 +57,7 @@ pub fn from_int_list(uuid: List(Int)) -> Result(UUID, Nil) {
       case
         list.try_fold(uuid, <<>>, fn(acc, code) {
           case code >= 0 && code <= 255 {
-            True ->
-              bit_array.append(acc, <<code>>)
-              |> Ok
+            True -> Ok(bit_array.append(acc, <<code>>))
             False -> Error(Nil)
           }
         })

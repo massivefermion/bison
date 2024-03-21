@@ -47,8 +47,8 @@ fn bson_to_canonical(value: bson.Value) {
         #(
           "$numberInt",
           n
-          |> int.to_string
-          |> json.string,
+            |> int.to_string
+            |> json.string,
         ),
       ])
 
@@ -57,8 +57,8 @@ fn bson_to_canonical(value: bson.Value) {
         #(
           "$numberLong",
           n
-          |> int.to_string
-          |> json.string,
+            |> int.to_string
+            |> json.string,
         ),
       ])
 
@@ -67,8 +67,8 @@ fn bson_to_canonical(value: bson.Value) {
         #(
           "$numberDouble",
           f
-          |> float.to_string
-          |> json.string,
+            |> float.to_string
+            |> json.string,
         ),
       ])
 
@@ -81,8 +81,8 @@ fn bson_to_canonical(value: bson.Value) {
             #(
               "$numberLong",
               { micro_t / 1000 }
-              |> int.to_string
-              |> json.string,
+                |> int.to_string
+                |> json.string,
             ),
           ]),
         ),
@@ -113,8 +113,8 @@ fn bson_to_canonical(value: bson.Value) {
         #(
           "$oid",
           id
-          |> object_id.to_string
-          |> json.string,
+            |> object_id.to_string
+            |> json.string,
         ),
       ])
 
@@ -126,9 +126,9 @@ fn bson_to_canonical(value: bson.Value) {
             #(
               "base64",
               md5
-              |> md5.to_bit_array
-              |> bit_array.base64_encode(True)
-              |> json.string,
+                |> md5.to_bit_array
+                |> bit_array.base64_encode(True)
+                |> json.string,
             ),
             #("subType", json.string("05")),
           ]),
@@ -143,9 +143,9 @@ fn bson_to_canonical(value: bson.Value) {
             #(
               "base64",
               uuid
-              |> uuid.to_bit_array
-              |> bit_array.base64_encode(True)
-              |> json.string,
+                |> uuid.to_bit_array
+                |> bit_array.base64_encode(True)
+                |> json.string,
             ),
             #("subType", json.string("04")),
           ]),
@@ -160,9 +160,9 @@ fn bson_to_canonical(value: bson.Value) {
             #(
               "base64",
               generic
-              |> generic.to_bit_array
-              |> bit_array.base64_encode(True)
-              |> json.string,
+                |> generic.to_bit_array
+                |> bit_array.base64_encode(True)
+                |> json.string,
             ),
             #("subType", json.string("00")),
           ]),
@@ -179,8 +179,8 @@ fn bson_to_canonical(value: bson.Value) {
             #(
               "base64",
               value
-              |> bit_array.base64_encode(True)
-              |> json.string,
+                |> bit_array.base64_encode(True)
+                |> json.string,
             ),
             #("subType", json.string(code)),
           ]),

@@ -72,11 +72,7 @@ pub fn bool(dyn) {
 
 pub fn bit_array(dyn) {
   {
-    dynamic.any([
-      dynamic.element(2, dynamic.bit_array),
-      dynamic.bit_array
-      |> wrap,
-    ])
+    dynamic.any([dynamic.element(2, dynamic.bit_array), wrap(dynamic.bit_array)])
     |> wrap
     |> wrap
   }(dyn)
@@ -94,8 +90,9 @@ pub fn time(dyn) {
 pub fn object_id(dyn) {
   use value <- result.then({ wrap(dynamic.element(1, dynamic.bit_array)) }(dyn))
 
-  object_id.from_bit_array(value)
-  |> result.replace_error([dynamic.DecodeError("object id", "bit array", [])])
+  result.replace_error(object_id.from_bit_array(value), [
+    dynamic.DecodeError("object id", "bit array", []),
+  ])
 }
 
 pub fn timestamp(dyn) {

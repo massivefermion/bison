@@ -34,9 +34,7 @@ fn decode_document(binary: BitArray) -> Result(bson.Value, Nil) {
               use body <- result.then(bit_array.slice(
                 rest,
                 0,
-                total_size
-                - 4
-                - 1,
+                total_size - 4 - 1,
               ))
               use body <- result.then(decode_body(body, dict.new()))
               body
@@ -225,8 +223,7 @@ fn decode_body(
                     bit_array.slice(
                       rest,
                       doc_size,
-                      bit_array.byte_size(rest)
-                      - doc_size,
+                      bit_array.byte_size(rest) - doc_size,
                     )
                   {
                     Ok(rest) -> recurse_with_new_kv(rest, storage, key, doc)
@@ -255,8 +252,8 @@ fn decode_body(
                         storage,
                         key,
                         value
-                        |> bson.Generic
-                        |> bson.Binary,
+                          |> bson.Generic
+                          |> bson.Binary,
                       )
                     }
 
@@ -268,8 +265,8 @@ fn decode_body(
                         storage,
                         key,
                         value
-                        |> bson.MD5
-                        |> bson.Binary,
+                          |> bson.MD5
+                          |> bson.Binary,
                       )
                     }
 
@@ -281,8 +278,8 @@ fn decode_body(
                         storage,
                         key,
                         value
-                        |> bson.UUID
-                        |> bson.Binary,
+                          |> bson.UUID
+                          |> bson.Binary,
                       )
                     }
 
@@ -297,8 +294,8 @@ fn decode_body(
                         storage,
                         key,
                         value
-                        |> bson.Custom
-                        |> bson.Binary,
+                          |> bson.Custom
+                          |> bson.Binary,
                       )
                     }
 

@@ -45,6 +45,7 @@ pub fn from_string(md5: String) -> Result(MD5, Nil) {
           |> Ok
         Error(Nil) -> Error(Nil)
       }
+
     False -> Error(Nil)
   }
 }
@@ -55,9 +56,7 @@ pub fn from_int_list(md5: List(Int)) -> Result(MD5, Nil) {
       case
         list.try_fold(md5, <<>>, fn(acc, code) {
           case code >= 0 && code <= 255 {
-            True ->
-              bit_array.append(acc, <<code>>)
-              |> Ok
+            True -> Ok(bit_array.append(acc, <<code>>))
             False -> Error(Nil)
           }
         })

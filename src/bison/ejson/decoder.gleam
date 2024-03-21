@@ -103,9 +103,13 @@ fn timestamp(dyn) {
 fn regex(dyn) {
   dynamic.decode2(
     bson.Regex,
-    dynamic.field("$regularExpression", dynamic.field("pattern", dynamic.string),
+    dynamic.field(
+      "$regularExpression",
+      dynamic.field("pattern", dynamic.string),
     ),
-    dynamic.field("$regularExpression", dynamic.field("options", dynamic.string),
+    dynamic.field(
+      "$regularExpression",
+      dynamic.field("options", dynamic.string),
     ),
   )(dyn)
 }
@@ -226,7 +230,10 @@ fn binary(dyn) {
                       Ok(md5) -> Ok(bson.MD5(md5))
                       Error(Nil) ->
                         Error([
-                          dynamic.DecodeError("md5 binary", "not md5 binary", [],
+                          dynamic.DecodeError(
+                            "md5 binary",
+                            "not md5 binary",
+                            [],
                           ),
                         ])
                     }

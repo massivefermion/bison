@@ -24,9 +24,6 @@ pub fn encode_list(doc: List(#(String, bson.Value))) -> BitArray {
   }
 }
 
-type Entity =
-  #(kind.Kind, BitArray)
-
 fn document(doc: dict.Dict(String, bson.Value)) -> Entity {
   let doc =
     dict.fold(doc, <<>>, fn(acc, key, value) {
@@ -34,11 +31,7 @@ fn document(doc: dict.Dict(String, bson.Value)) -> Entity {
     })
 
   let size = bit_array.byte_size(doc) + 5
-  #(
-    kind.document,
-    [<<size:32-little>>, doc, <<0>>]
-    |> bit_array.concat,
-  )
+  #(kind.document, bit_array.concat([<<size:32-little>>, doc, <<0>>]))
 }
 
 fn document_from_list(doc: List(#(String, bson.Value))) -> Entity {
@@ -48,11 +41,7 @@ fn document_from_list(doc: List(#(String, bson.Value))) -> Entity {
     })
 
   let size = bit_array.byte_size(doc) + 5
-  #(
-    kind.document,
-    [<<size:32-little>>, doc, <<0>>]
-    |> bit_array.concat,
-  )
+  #(kind.document, bit_array.concat([<<size:32-little>>, doc, <<0>>]))
 }
 
 fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
@@ -83,8 +72,7 @@ fn encode_kv(pair: #(String, bson.Value)) -> BitArray {
     bson.Timestamp(stamp, counter) -> timestamp(stamp, counter)
   }
 
-  [kind.code, key, value]
-  |> bit_array.concat
+  bit_array.concat([kind.code, key, value])
 }
 
 fn null() -> Entity {
@@ -177,11 +165,7 @@ fn md5(value: md5.MD5) -> Entity {
   let value = md5.to_bit_array(value)
   let length = bit_array.byte_size(value)
 
-  #(
-    kind.binary,
-    [<<length:32-little>>, kind.md5.code, value]
-    |> bit_array.concat,
-  )
+  #(kind.binary, bit_array.concat([<<length:32-little>>, kind.md5.code, value]))
 }
 
 fn uuid(value: uuid.UUID) -> Entity {
@@ -190,8 +174,7 @@ fn uuid(value: uuid.UUID) -> Entity {
 
   #(
     kind.binary,
-    [<<length:32-little>>, kind.uuid.code, value]
-    |> bit_array.concat,
+    bit_array.concat([<<length:32-little>>, kind.uuid.code, value]),
   )
 }
 
@@ -199,11 +182,7 @@ fn custom(value: custom.Custom) -> Entity {
   let #(code, value) = custom.to_bit_array_with_code(value)
   let length = bit_array.byte_size(value)
 
-  #(
-    kind.binary,
-    [<<length:32-little>>, <<code>>, value]
-    |> bit_array.concat,
-  )
+  #(kind.binary, bit_array.concat([<<length:32-little>>, <<code>>, value]))
 }
 
 fn generic(value: generic.Generic) -> Entity {
@@ -212,15 +191,13 @@ fn generic(value: generic.Generic) -> Entity {
 
   #(
     kind.binary,
-    [<<length:32-little>>, kind.generic.code, value]
-    |> bit_array.concat,
+    bit_array.concat([<<length:32-little>>, kind.generic.code, value]),
   )
 }
 
 fn regex(pattern: String, options: String) -> Entity {
-  #(
-    kind.regex,
-    [<<pattern:utf8, 0, options:utf8, 0>>]
-    |> bit_array.concat,
-  )
+  #(kind.regex, bit_array.concat([<<pattern:utf8, 0, options:utf8, 0>>]))
 }
+
+type Entity =
+  #(kind.Kind, BitArray)

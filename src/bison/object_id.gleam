@@ -25,8 +25,12 @@ pub fn from_datetime(datetime: birl.Time) -> ObjectId {
   let assert <<machine_id:size(24), _:bits>> = hash(get_hostname())
 
   let assert Ok(id) =
-    <<moment:big-32, machine_id:big-24, get_pid():big-16, counter:big-24>>
-    |> from_bit_array
+    from_bit_array(<<
+      moment:big-32,
+      machine_id:big-24,
+      get_pid():big-16,
+      counter:big-24,
+    >>)
 
   id
 }
@@ -46,7 +50,8 @@ pub fn range(
   to b: option.Option(ObjectId),
   step s: duration.Duration,
 ) {
-  birl.range(to_datetime(a), option.map(b, to_datetime), s)
+  to_datetime(a)
+  |> birl.range(option.map(b, to_datetime), s)
   |> iterator.map(from_datetime)
 }
 
@@ -66,6 +71,7 @@ pub fn compare(a: ObjectId, b: ObjectId) -> order.Order {
             False -> order.Gt
           }
       }
+
     False ->
       case moment_a < moment_b {
         True -> order.Lt
@@ -112,6 +118,7 @@ pub fn from_string(id: String) -> Result(ObjectId, Nil) {
           |> Ok
         Error(Nil) -> Error(Nil)
       }
+
     _ -> Error(Nil)
   }
 }
@@ -122,9 +129,7 @@ pub fn from_int_list(id: List(Int)) -> Result(ObjectId, Nil) {
       case
         list.try_fold(id, <<>>, fn(acc, code) {
           case code >= 0 && code <= 255 {
-            True ->
-              bit_array.append(acc, <<code>>)
-              |> Ok
+            True -> Ok(bit_array.append(acc, <<code>>))
             False -> Error(Nil)
           }
         })
