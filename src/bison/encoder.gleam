@@ -1,14 +1,16 @@
+import gleam/bit_array
+import gleam/dict
 import gleam/int
 import gleam/list
-import gleam/dict
-import gleam/bit_array
-import bison/md5
-import bison/uuid
-import bison/kind
+
 import bison/bson
 import bison/custom
 import bison/generic
+import bison/kind
+import bison/md5
 import bison/object_id
+import bison/uuid
+
 import birl
 import birl/duration
 

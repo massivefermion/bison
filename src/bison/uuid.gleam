@@ -1,7 +1,7 @@
+import gleam/bit_array
 import gleam/list
 import gleam/queue
 import gleam/string
-import gleam/bit_array
 
 pub opaque type UUID {
   UUID(BitArray)

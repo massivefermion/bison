@@ -1,6 +1,6 @@
+import gleam/bit_array
 import gleam/list
 import gleam/queue
-import gleam/bit_array
 
 pub opaque type Generic {
   Generic(BitArray)

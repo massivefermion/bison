@@ -1,7 +1,9 @@
-import gleam/result
 import gleam/dynamic
+import gleam/result
+
 import bison/bson
 import bison/object_id
+
 import birl
 import birl/duration
 

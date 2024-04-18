@@ -1,9 +1,11 @@
 import gleam/dict.{type Dict}
-import bison/md5.{type MD5}
-import bison/uuid.{type UUID}
+
 import bison/custom.{type Custom}
 import bison/generic.{type Generic}
+import bison/md5.{type MD5}
 import bison/object_id.{type ObjectId}
+import bison/uuid.{type UUID}
+
 import birl.{type Time}
 
 /// if you're not familiar with type `Time`, see [birl](https://hex.pm/packages/birl)!

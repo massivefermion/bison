@@ -1,19 +1,21 @@
-import gleam/int
-import gleam/dict
-import gleam/list
-import gleam/float
-import gleam/result
-import gleam/dynamic
 import gleam/bit_array
-import bison/md5
+import gleam/dict
+import gleam/dynamic
+import gleam/float
+import gleam/int
+import gleam/list
+import gleam/result
+
 import bison/bson
-import bison/uuid
 import bison/custom
 import bison/generic
+import bison/md5
 import bison/object_id
-import juno
+import bison/uuid
+
 import birl
 import birl/duration
+import juno
 
 pub fn from_canonical(doc: String) {
   use doc <- result.then(
@@ -194,8 +196,8 @@ fn binary(dyn) {
       v
       |> dynamic.dict(dynamic.string, dynamic.string)
       |> result.map(fn(bin_doc) {
-        case #(dict.get(bin_doc, "base64"), dict.get(bin_doc, "subType")) {
-          #(Ok(base64), Ok(sub_type)) ->
+        case dict.get(bin_doc, "base64"), dict.get(bin_doc, "subType") {
+          Ok(base64), Ok(sub_type) ->
             case bit_array.base64_decode(base64) {
               Ok(decoded) ->
                 case sub_type {
@@ -266,7 +268,7 @@ fn binary(dyn) {
 
               _ -> Error([dynamic.DecodeError("binary", "not binary", [])])
             }
-          _ -> Error([dynamic.DecodeError("binary", "not binary", [])])
+          _, _ -> Error([dynamic.DecodeError("binary", "not binary", [])])
         }
       })
       |> result.flatten

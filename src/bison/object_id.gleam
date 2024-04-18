@@ -1,11 +1,12 @@
+import gleam/bit_array
 import gleam/int
+import gleam/iterator
 import gleam/list
+import gleam/option
 import gleam/order
 import gleam/queue
-import gleam/option
 import gleam/string
-import gleam/iterator
-import gleam/bit_array
+
 import birl
 import birl/duration
 

@@ -1,8 +1,9 @@
 import gleam/dict
 import gleam/dynamic
+
 import bison/bson
-import bison/encoder
 import bison/decoder
+import bison/encoder
 
 pub fn encode(doc) {
   encoder.encode(doc)

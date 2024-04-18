@@ -1,15 +1,17 @@
-import gleam/int
-import gleam/dict
-import gleam/list
-import gleam/float
 import gleam/bit_array
+import gleam/dict
+import gleam/float
+import gleam/int
 import gleam/json
-import bison/md5
+import gleam/list
+
 import bison/bson
-import bison/uuid
 import bison/custom
 import bison/generic
+import bison/md5
 import bison/object_id
+import bison/uuid
+
 import birl
 import birl/duration
 
