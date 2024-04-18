@@ -1,7 +1,7 @@
+import birl
+import bison/object_id
 import gleam/order
 import gleeunit/should
-import bison/object_id
-import birl
 
 const string_id = "633eb709917585842c7345c7"
 

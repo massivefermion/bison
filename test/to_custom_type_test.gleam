@@ -1,6 +1,6 @@
+import bison.{decode, to_custom_type}
 import gleeunit/should
 import values
-import bison.{decode, to_custom_type}
 
 pub fn decoder_test() {
   let typed_doc = values.get_typed_doc()

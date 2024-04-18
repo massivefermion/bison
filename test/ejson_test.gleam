@@ -1,6 +1,6 @@
+import bison/ejson.{from_canonical, to_canonical}
 import gleeunit/should
 import values
-import bison/ejson.{from_canonical, to_canonical}
 
 pub fn encoder_test() {
   let doc = values.get_doc()

@@ -1,9 +1,11 @@
 import gleam/dict
 import gleam/dynamic
 import gleeunit/should
+
 import bison/bson
 import bison/decoders
 import bison/object_id
+
 import birl
 
 pub const bson = <<
