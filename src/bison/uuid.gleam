@@ -1,6 +1,6 @@
 import gleam/bit_array
+import gleam/deque
 import gleam/list
-import gleam/queue
 import gleam/string
 
 pub opaque type UUID {
@@ -15,7 +15,7 @@ pub fn to_string(uuid: UUID) -> String {
 
 pub fn to_int_list(uuid: UUID) -> List(Int) {
   case uuid {
-    UUID(value) -> to_int_list_internal(value, queue.new())
+    UUID(value) -> to_int_list_internal(value, deque.new())
   }
 }
 
@@ -121,14 +121,14 @@ fn to_string_internal(remaining: BitArray, storage: String) -> String {
 
 fn to_int_list_internal(
   remaining: BitArray,
-  storage: queue.Queue(Int),
+  storage: deque.Deque(Int),
 ) -> List(Int) {
   let assert <<num:8, remaining:bytes>> = remaining
 
-  let new_storage = queue.push_back(storage, num)
+  let new_storage = deque.push_back(storage, num)
 
   case bit_array.byte_size(remaining) {
-    0 -> queue.to_list(new_storage)
+    0 -> deque.to_list(new_storage)
     _ -> to_int_list_internal(remaining, new_storage)
   }
 }
